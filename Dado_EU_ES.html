@@ -1,0 +1,936 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title data-i18n-title="title">Simulador de lanzamientos de dado</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --panel:#111a2e;
+      --panel2:#0f1930;
+      --text:#e9eefc;
+      --muted:#aeb8d6;
+      --accent:#7aa6ff;
+      --ok:#53d38a;
+      --warn:#ffcc66;
+      --bad:#ff6b6b;
+      --border:rgba(255,255,255,.12);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius:16px;
+    }
+
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 20% 10%, rgba(122,166,255,.12), transparent 60%),
+                  radial-gradient(900px 500px at 80% 30%, rgba(83,211,138,.10), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+    }
+
+    .wrap{
+      max-width: 1100px;
+      margin: 28px auto;
+      padding: 0 16px 40px;
+    }
+
+    h1{
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0 0 14px;
+      letter-spacing:.2px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:16px;
+    }
+
+    @media (max-width: 900px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .card .hd{
+      padding: 14px 16px;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      background: rgba(255,255,255,.03);
+    }
+
+    .card .hd .title{
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .card .bd{
+      padding: 16px;
+    }
+
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:flex-end;
+    }
+
+    label{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      font-size: 12px;
+      color: var(--muted);
+      min-width: 220px;
+    }
+
+    input[type="number"]{
+      background: rgba(255,255,255,.06);
+      border:1px solid var(--border);
+      border-radius: 12px;
+      padding:10px 12px;
+      color: var(--text);
+      outline:none;
+      font-size: 14px;
+    }
+    input[type="number"]:focus{
+      border-color: rgba(122,166,255,.55);
+      box-shadow: 0 0 0 3px rgba(122,166,255,.18);
+    }
+
+    .btns{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    button{
+      appearance:none;
+      border:1px solid var(--border);
+      background: rgba(122,166,255,.18);
+      color: var(--text);
+      font-weight: 700;
+      padding: 10px 14px;
+      border-radius: 12px;
+      cursor:pointer;
+      transition: transform .05s ease, background .15s ease, opacity .15s ease;
+      user-select:none;
+    }
+    button:hover{ background: rgba(122,166,255,.28); }
+    button:active{ transform: translateY(1px); }
+    button:disabled{
+      opacity: .45;
+      cursor:not-allowed;
+    }
+
+    .btn-secondary{
+      background: rgba(255,255,255,.08);
+    }
+    .btn-secondary:hover{
+      background: rgba(255,255,255,.12);
+    }
+
+    .status{
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      font-size: 13px;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .status strong{ color: var(--text); }
+
+    /* Zona de animación */
+    .arena{
+  position: relative;
+  height: 240px;
+  border-radius: 16px;
+  border:1px solid var(--border);
+  overflow:hidden;
+
+  /* Tapete verde completo */
+  background:
+    radial-gradient(circle at 50% 30%, rgba(255,255,255,0.08), transparent 60%),
+    linear-gradient(180deg, #1f6f3d 0%, #155a30 60%, #104626 100%);
+}
+
+/* Eliminamos la superficie como capa inferior separada */
+.surface{
+  display:none;
+}
+
+/* El dado SIEMPRE delante */
+.dice{
+  position:absolute;
+  width: 84px;
+  height: 84px;
+  left: 22px;
+  top: 74px;
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(255,255,255,.90), rgba(255,255,255,.55));
+  box-shadow:
+    0 18px 35px rgba(0,0,0,.40),
+    inset 0 1px 0 rgba(255,255,255,.65),
+    inset 0 -6px 18px rgba(0,0,0,.12);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transform: rotate(0deg) scale(1);
+  will-change: transform, left, top;
+
+  z-index: 10; /* CLAVE */
+}
+
+    .pip-grid{
+      width: 66px;
+      height: 66px;
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 6px;
+      padding: 8px;
+      box-sizing:border-box;
+    }
+
+    .pip{
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(0,0,0,.0);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);
+    }
+
+    .pip.on{
+      background: radial-gradient(circle at 30% 30%, #3b3b3b, #141414 70%);
+      box-shadow:
+        inset 0 1px 2px rgba(255,255,255,.12),
+        0 2px 6px rgba(0,0,0,.22);
+    }
+
+    /* Tablas */
+    table{
+      width:100%;
+      border-collapse: collapse;
+      overflow:hidden;
+      border-radius: 12px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.03);
+    }
+    th, td{
+      padding: 10px 10px;
+      font-size: 13px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      text-align:left;
+    }
+    th{
+      font-size: 12px;
+      letter-spacing:.3px;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: rgba(255,255,255,.04);
+    }
+    tr:last-child td{ border-bottom:none; }
+
+    .scroll{
+      max-height: 410px;
+      overflow:auto;
+      border-radius: 12px;
+    }
+
+    .two-col{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 900px){
+      .two-col{ grid-template-columns: 1fr; }
+    }
+
+    .note{
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .hidden{ display:none !important; }
+
+    canvas{
+      width:100%;
+      height: 260px;
+      background: rgba(255,255,255,.03);
+      border:1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      font-size: 12px;
+      white-space:nowrap;
+    }
+    .dot{
+      width:9px; height:9px; border-radius:50%;
+      background: var(--warn);
+      box-shadow: 0 0 0 3px rgba(255,204,102,.18);
+    }
+    .dot.ok{
+      background: var(--ok);
+      box-shadow: 0 0 0 3px rgba(83,211,138,.16);
+    }
+  
+    .langbar{
+      display:flex;
+      justify-content:flex-end;
+      align-items:center;
+      gap:10px;
+      margin: 0 0 10px;
+    }
+    .langlabel{
+      font-size:12px;
+      color: var(--muted);
+    }
+    #langSelect{
+      background: rgba(255,255,255,.06);
+      border:1px solid var(--border);
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 10px;
+      outline:none;
+    }
+    #langSelect:focus{
+      border-color: rgba(122,166,255,.55);
+      box-shadow: 0 0 0 3px rgba(122,166,255,.18);
+    }
+
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <div class="langbar">
+      <label for="langSelect" class="langlabel" data-i18n="langLabel">Idioma</label>
+      <select id="langSelect" aria-label="Selector de idioma">
+        <option value="es">ES</option>
+        <option value="eu">EU</option>
+      </select>
+    </div>
+
+    <h1 data-i18n="h1">Simulador de lanzamientos de dado</h1>
+
+    <div class="grid">
+      <!-- Panel izquierda: control + animación -->
+      <section class="card">
+        <div class="hd">
+          <div class="title" data-i18n="panelControl">Control y animación</div>
+          <div class="pill" id="statePill"><span class="dot" id="stateDot"></span><span id="stateText" data-i18n="stateReady">Listo</span></div>
+        </div>
+        <div class="bd">
+          <div class="controls">
+            <label>
+              <span data-i18n="labelN">Número de lanzamientos (N)</span>
+              <input id="nRolls" type="number" min="1" max="10000" step="1" value="30" />
+            </label>
+
+<div class="btns">
+  <button id="btnInit" class="btn-secondary" title="Reinicia la simulación y borra resultados" data-i18n="btnInit">Inicializar</button>
+  <button id="btnRoll" title="Realiza un lanzamiento (con animación)" data-i18n="btnRoll">Lanzar dado</button>
+  <button id="btnAuto" class="btn-secondary" title="Lanza automáticamente los lanzamientos restantes" data-i18n="btnAuto">Lanzar dado automáticamente</button>
+</div>
+          </div>
+
+          
+          <div class="status">
+            <div><span data-i18n="statusTarget">Objetivo</span>: <strong id="targetN">30</strong> <span data-i18n="statusRolls">lanzamientos</span></div>
+            <div><span data-i18n="statusProgress">Progreso</span>: <strong><span id="doneN">0</span>/<span id="targetN2">30</span></strong></div>
+            <div><span data-i18n="statusLast">Último resultado</span>: <strong id="lastVal">—</strong></div>
+          </div>
+
+
+          <div style="height:14px"></div>
+
+          <div class="arena" aria-label="Área de animación">
+            <div class="dice" id="dice" aria-label="Dado">
+              <div class="pip-grid" id="pipGrid" aria-hidden="true"></div>
+            </div>
+            <div class="surface"></div>
+          </div>
+
+          <div class="note">
+            <span data-i18n="noteAnim">Notas: el botón se deshabilita durante la animación. Al completar N, se calculan frecuencias y se dibuja el diagrama de barras.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel derecha: tabla de resultados -->
+      <section class="card">
+        <div class="hd">
+          <div class="title" data-i18n="panelResults">Resultados de lanzamientos</div>
+          <div class="pill"><span class="dot ok"></span><span data-i18n="pillAccum">Tabla acumulada</span></div>
+        </div>
+        <div class="bd">
+          <div class="scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th data-i18n="thValue">Valor</th>
+                </tr>
+              </thead>
+              <tbody id="resultsBody">
+                <!-- filas -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div style="height:16px"></div>
+
+    <!-- Panel inferior: probabilidades y gráfico -->
+    <section class="card hidden" id="finalBlock">
+      <div class="hd">
+        <div class="title" data-i18n="panelStats">Probabilidades empíricas y gráfico</div>
+        <div class="pill"><span class="dot ok"></span><span data-i18n="pillDone">Completado</span></div>
+      </div>
+      <div class="bd">
+        <div class="two-col">
+          <div>
+            <table>
+              <thead>
+                <tr>
+                  <th data-i18n="thOutcome">Resultado</th>
+                  <th data-i18n="thAbs">Recuento</th>
+                  <th data-i18n="thProb">Probabilidad</th>
+                </tr>
+              </thead>
+              <tbody id="probBody"></tbody>
+            </table>
+          </div>
+          <div>
+            <canvas id="chart" width="900" height="520" aria-label="Diagrama de barras"></canvas>
+            <div class="note"><span data-i18n="noteChart">El gráfico representa la probabilidad empírica (frecuencia relativa) de cada cara 1–6.</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+<script>
+(() => {
+  "use strict";
+
+  // ---------- utilidades ----------
+  const $ = (sel) => document.querySelector(sel);
+
+  function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+
+  // ---------- i18n (ES/EU) ----------
+  const I18N = {
+    es: {
+      title: "Simulador de lanzamientos de dado",
+      h1: "Simulador de lanzamientos de dado",
+      langLabel: "Idioma",
+      panelControl: "Control y animación",
+      stateReady: "Listo",
+      stateRunning: "Lanzando…",
+      stateDone: "Finalizado",
+      labelN: "Número de lanzamientos (N)",
+      btnInit: "Inicializar",
+      btnRoll: "Lanzar dado",
+      btnAuto: "Lanzar dado automáticamente",
+      btnAutoRunning: "Lanzando...",
+      statusTarget: "Objetivo",
+      statusRolls: "lanzamientos",
+      statusProgress: "Progreso",
+      statusLast: "Último resultado",
+      noteAnim: "Notas: el botón se deshabilita durante la animación. Al completar N, se calculan frecuencias y se dibuja el diagrama de barras.",
+      panelResults: "Resultados de lanzamientos",
+      pillAccum: "Tabla acumulada",
+      thValue: "Valor",
+      panelStats: "Probabilidades empíricas y gráfico",
+      pillDone: "Completado",
+      thOutcome: "Resultado",
+      thAbs: "Frecuencia absoluta",
+      thProb: "Probabilidad enpirikoa (maiztasun erlatiboa)",
+      noteChart: "El gráfico representa la probabilidad empírica (frecuencia relativa) de cada cara 1–6.",
+      chartTitle: "Probabilidad empírica por cara (barras)",
+      chartY: "Probabilidad"
+    },
+    eu: {
+      title: "Dado-jaurtiketen simulagailua",
+      h1: "Dado-jaurtiketen simulagailua",
+      langLabel: "Hizkuntza",
+      panelControl: "Kontrola eta animazioa",
+      stateReady: "Prest",
+      stateRunning: "Jaurtitzen…",
+      stateDone: "Amaituta",
+      labelN: "Jaurtiketa kopurua (lagina)",
+      btnInit: "Hasieratu",
+      btnRoll: "Dadoa jaurti",
+      btnAuto: "Dadoa automatikoki jaurti",
+      btnAutoRunning: "Jaurtitzen...",
+      statusTarget: "Helburua",
+      statusRolls: "jaurtiketa",
+      statusProgress: "Aurrerapena",
+      statusLast: "Azken emaitza",
+      noteAnim: "Oharrak: botoia desgaitu egiten da animazioan zehar. N jaurtiketa osatutakoan, maiztasunak kalkulatzen dira eta barra-diagrama marrazten da.",
+      panelResults: "Jaurtiketen emaitzak",
+      pillAccum: "Taula metatua",
+      thValue: "Balioa",
+      panelStats: "Probabilitate enpirikoak eta grafikoa",
+      pillDone: "Amaituta",
+      thOutcome: "Emaitza",
+      thAbs: "Maiztasun absolutua",
+      thProb: "Probabilitate enpirikoa (maiztasun erlatiboa)",
+      noteChart: "Grafikoak 1–6 aurpegi bakoitzaren probabilitate enpirikoa (maiztasun erlatiboa) adierazten du.",
+      chartTitle: "Aurpegi bakoitzaren probabilitate enpirikoa (barrak)",
+      chartY: "Probabilitatea"
+    }
+  };
+
+  let currentLang = "eu";
+
+  function t(key){
+    return (I18N[currentLang] && I18N[currentLang][key]) || (I18N.es[key] ?? key);
+  }
+
+  function applyLanguage(lang){
+    currentLang = (lang === "eu") ? "eu" : "es";
+    document.documentElement.lang = currentLang;
+
+    // Title
+    const ttl = document.querySelector("title[data-i18n-title='title']");
+    if(ttl) ttl.textContent = t("title");
+
+    // Text nodes
+    document.querySelectorAll("[data-i18n]").forEach(el => {
+      const key = el.getAttribute("data-i18n");
+      el.textContent = t(key);
+    });
+
+    // Update dynamic UI bits
+    if(btnAuto){
+      btnAuto.textContent = autoMode ? t("btnAutoRunning") : t("btnAuto");
+    }
+  }
+
+
+  function setPill(state){
+    // state: "ready" | "running" | "done"
+    const dot = $("#stateDot");
+    const text = $("#stateText");
+    if(state === "running"){
+      dot.classList.remove("ok");
+      dot.style.background = "var(--warn)";
+      dot.style.boxShadow = "0 0 0 3px rgba(255,204,102,.18)";
+      text.textContent = t("stateRunning");
+    } else if(state === "done"){
+      dot.classList.add("ok");
+      dot.style.background = "var(--ok)";
+      dot.style.boxShadow = "0 0 0 3px rgba(83,211,138,.16)";
+      text.textContent = t("stateDone");
+    } else {
+      dot.classList.remove("ok");
+      dot.style.background = "var(--warn)";
+      dot.style.boxShadow = "0 0 0 3px rgba(255,204,102,.18)";
+      text.textContent = t("stateReady");
+    }
+  }
+
+  // ---------- dado (puntos) ----------
+  const pipGrid = $("#pipGrid");
+  const pipEls = [];
+  for(let i=0;i<9;i++){
+    const p = document.createElement("div");
+    p.className = "pip";
+    pipGrid.appendChild(p);
+    pipEls.push(p);
+  }
+
+  // índices de una matriz 3x3: 0..8
+  // 0 1 2
+  // 3 4 5
+  // 6 7 8
+  const faceMap = {
+    1: [4],
+    2: [0,8],
+    3: [0,4,8],
+    4: [0,2,6,8],
+    5: [0,2,4,6,8],
+    6: [0,2,3,5,6,8]
+  };
+
+  function renderFace(val){
+    const on = new Set(faceMap[val] || []);
+    for(let i=0;i<9;i++){
+      pipEls[i].classList.toggle("on", on.has(i));
+    }
+  }
+
+  // ---------- estado de simulación ----------
+  let target = 30;
+  let results = [];          // lista de valores 1..6
+  let counts = [0,0,0,0,0,0]; // índice 0->cara 1
+  let animating = false;
+
+  const nInput = $("#nRolls");
+  const btnInit = $("#btnInit");
+  const btnRoll = $("#btnRoll");
+const btnAuto = $("#btnAuto");
+
+let autoMode = false;
+let stopAuto = false;
+  const resultsBody = $("#resultsBody");
+
+  const targetN = $("#targetN");
+  const targetN2 = $("#targetN2");
+  const doneN = $("#doneN");
+  const lastVal = $("#lastVal");
+
+  const dice = $("#dice");
+  const finalBlock = $("#finalBlock");
+  const probBody = $("#probBody");
+  const canvas = $("#chart");
+  const ctx = canvas.getContext("2d");
+
+  const langSelect = $("#langSelect");
+  if(langSelect){
+    langSelect.addEventListener("change", (e) => applyLanguage(e.target.value));
+  }
+
+
+function syncHeader(){
+  targetN.textContent = String(target);
+  targetN2.textContent = String(target);
+  doneN.textContent = String(results.length);
+
+  const finished = results.length >= target;
+  btnRoll.disabled = animating || finished || autoMode;
+  btnAuto.disabled = animating || finished || autoMode;
+}
+
+  function resetAll(){
+    const raw = Number(nInput.value);
+    const N = clamp(Number.isFinite(raw) ? Math.trunc(raw) : 1, 1, 10000);
+    nInput.value = String(N);
+    target = N;
+autoMode = false;
+stopAuto = false;
+
+    results = [];
+    counts = [0,0,0,0,0,0];
+    resultsBody.innerHTML = "";
+    lastVal.textContent = "—";
+    finalBlock.classList.add("hidden");
+    setPill("ready");
+
+    // dado a posición inicial
+    dice.style.left = "22px";
+    dice.style.top = "74px";
+    dice.style.transform = "rotate(0deg) scale(1)";
+    renderFace(1);
+
+    syncHeader();
+btnAuto.textContent = t("btnAuto");
+  }
+
+  function appendResult(val){
+    results.push(val);
+    counts[val-1]++;
+
+    const tr = document.createElement("tr");
+    const td1 = document.createElement("td");
+    const td2 = document.createElement("td");
+    td1.textContent = String(results.length);
+    td2.textContent = String(val);
+    tr.appendChild(td1);
+    tr.appendChild(td2);
+    resultsBody.appendChild(tr);
+
+    lastVal.textContent = String(val);
+    doneN.textContent = String(results.length);
+  }
+
+  // ---------- animación ----------
+  function randInt(a,b){
+    // inclusivo
+    return a + Math.floor(Math.random() * (b - a + 1));
+  }
+
+function animateRoll(finalValue, fast = false){
+  // fast=true: animación mucho más corta para modo automático
+  return new Promise((resolve) => {
+    animating = true;
+    setPill("running");
+    syncHeader();
+
+    const duration = fast ? 140 : 820; // ms
+    const start = performance.now();
+    const startLeft = 22;
+    const endLeft = 320;
+
+    const baseTop = 74;
+    const jump = fast ? 10 : 28;
+
+    let lastFace = 1;
+
+    function step(t){
+      const p = clamp((t - start) / duration, 0, 1);
+      const ease = p < 0.5 ? 2*p*p : 1 - Math.pow(-2*p+2, 2)/2;
+
+      const left = startLeft + (endLeft - startLeft) * ease;
+      const top = baseTop - Math.sin(Math.PI * ease) * jump;
+
+      const rot = (fast ? 240 : 720) * ease + randInt(-6, 6);
+      const scale = 1 - (fast ? 0.03 : 0.06)*Math.sin(Math.PI*ease);
+
+      dice.style.left = left.toFixed(1) + "px";
+      dice.style.top = top.toFixed(1) + "px";
+      dice.style.transform = `rotate(${rot.toFixed(0)}deg) scale(${scale.toFixed(3)})`;
+
+      // En fast cambiamos cara menos veces (más eficiente)
+      if(p < 0.92){
+        const prob = fast ? 0.20 : 0.35;
+        if(Math.random() < prob){
+          lastFace = randInt(1,6);
+          renderFace(lastFace);
+        }
+        requestAnimationFrame(step);
+        return;
+      }
+
+      renderFace(finalValue);
+      dice.style.left = "320px";
+      dice.style.top = "74px";
+      dice.style.transform = `rotate(${randInt(-15,15)}deg) scale(1)`;
+
+      animating = false;
+      appendResult(finalValue);
+
+      if(results.length >= target){
+        setPill("done");
+        showFinalStats();
+      } else {
+        setPill("ready");
+      }
+      syncHeader();
+      resolve();
+    }
+
+    requestAnimationFrame(step);
+  });
+}
+
+  // ---------- estadísticas + gráfico ----------
+  function showFinalStats(){
+    // tabla probabilidades
+    probBody.innerHTML = "";
+    const N = results.length || 1;
+
+    for(let face=1; face<=6; face++){
+      const c = counts[face-1];
+      const p = c / N;
+
+      const tr = document.createElement("tr");
+      const tdA = document.createElement("td");
+      const tdB = document.createElement("td");
+      const tdC = document.createElement("td");
+
+      tdA.textContent = String(face);
+      tdB.textContent = String(c);
+      tdC.textContent = (p*100).toFixed(2) + " %";
+
+      tr.appendChild(tdA);
+      tr.appendChild(tdB);
+      tr.appendChild(tdC);
+      probBody.appendChild(tr);
+    }
+
+    finalBlock.classList.remove("hidden");
+    drawBars();
+  }
+
+  function drawBars(){
+    // diagrama de barras sencillo en Canvas, sin librerías
+    const W = canvas.width;
+    const H = canvas.height;
+
+    // limpiar
+    ctx.clearRect(0,0,W,H);
+
+    // márgenes
+    const mL = 70, mR = 24, mT = 26, mB = 64;
+    const plotW = W - mL - mR;
+    const plotH = H - mT - mB;
+
+    // datos (probabilidades)
+    const N = results.length || 1;
+    const probs = counts.map(c => c / N);
+    const maxY = Math.max(0.25, ...probs, 1/6); // escala razonable
+    const yMax = Math.ceil(maxY * 10) / 10;     // redondeo a 0.1
+
+    // fondo
+    ctx.fillStyle = "rgba(255,255,255,0.00)";
+    ctx.fillRect(0,0,W,H);
+
+    // ejes
+    ctx.strokeStyle = "rgba(255,255,255,0.20)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(mL, mT);
+    ctx.lineTo(mL, mT + plotH);
+    ctx.lineTo(mL + plotW, mT + plotH);
+    ctx.stroke();
+
+    // rejilla horizontal + ticks
+    ctx.fillStyle = "rgba(255,255,255,0.75)";
+    ctx.font = "14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+
+    const nGrid = 5;
+    for(let i=0;i<=nGrid;i++){
+      const y = mT + plotH - (plotH * i / nGrid);
+      ctx.strokeStyle = "rgba(255,255,255,0.10)";
+      ctx.beginPath();
+      ctx.moveTo(mL, y);
+      ctx.lineTo(mL + plotW, y);
+      ctx.stroke();
+
+      const val = (yMax * i / nGrid);
+      ctx.fillText(val.toFixed(2), mL - 10, y);
+    }
+
+    // barras
+    const gap = 18;
+    const barW = (plotW - gap*7) / 6; // 7 gaps (incluye extremos)
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+
+    for(let i=0;i<6;i++){
+      const x = mL + gap + i*(barW + gap);
+      const h = (probs[i] / yMax) * plotH;
+      const y = mT + plotH - h;
+
+      // barra
+      ctx.fillStyle = "rgba(122,166,255,0.55)";
+      ctx.fillRect(x, y, barW, h);
+
+      // borde
+      ctx.strokeStyle = "rgba(255,255,255,0.25)";
+      ctx.strokeRect(x, y, barW, h);
+
+      // etiqueta eje x (cara)
+      ctx.fillStyle = "rgba(255,255,255,0.85)";
+      ctx.fillText(String(i+1), x + barW/2, mT + plotH + 12);
+
+      // valor encima
+      ctx.textBaseline = "bottom";
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      ctx.fillText((probs[i]*100).toFixed(1)+"%", x + barW/2, y - 8);
+      ctx.textBaseline = "top";
+    }
+
+    // título
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillStyle = "rgba(255,255,255,0.92)";
+    ctx.font = "16px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    ctx.fillText(t("chartTitle"), mL, 6);
+
+    // etiqueta y
+    ctx.save();
+    ctx.translate(18, mT + plotH/2);
+    ctx.rotate(-Math.PI/2);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "rgba(255,255,255,0.75)";
+    ctx.font = "14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    ctx.fillText(t("chartY"), 0, 0);
+    ctx.restore();
+  }
+
+  // ---------- eventos ----------
+  btnInit.addEventListener("click", () => {
+    if(animating) return;
+    resetAll();
+  });
+
+btnRoll.addEventListener("click", async () => {
+  if(animating || autoMode) return;
+  if(results.length >= target){
+    syncHeader();
+    return;
+  }
+  const finalValue = randInt(1,6);
+  await animateRoll(finalValue, false);
+});
+btnAuto.addEventListener("click", async () => {
+  if(animating) return;
+  if(results.length >= target){
+    syncHeader();
+    return;
+  }
+
+  // Activar modo auto
+  autoMode = true;
+  stopAuto = false;
+  btnAuto.textContent = t("btnAutoRunning");
+  syncHeader();
+
+  // Lanza todos los restantes de forma encadenada
+  while(!stopAuto && results.length < target){
+    const finalValue = randInt(1,6);
+    await animateRoll(finalValue, true);
+
+    // micro-respiro para no bloquear UI completamente
+    // (y permitir repintado estable)
+    await new Promise(r => setTimeout(r, 0));
+  }
+
+  autoMode = false;
+  btnAuto.textContent = t("btnAuto");
+  syncHeader();
+});
+
+  nInput.addEventListener("change", () => {
+    // Si cambias N, por coherencia reiniciamos (evita mezclar series con distinta N)
+    if(animating) return;
+    resetAll();
+  });
+
+  // inicialización
+  resetAll();
+  if(langSelect){ langSelect.value = currentLang; }
+  applyLanguage(currentLang);
+
+})();
+</script>
+</body>
+</html>

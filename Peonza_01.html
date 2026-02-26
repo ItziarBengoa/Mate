@@ -1,0 +1,904 @@
+<!doctype html>
+<html lang="eu">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Peonza poligonal – simulagailua</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --panel:#111a2e;
+      --panel2:#0f1930;
+      --text:#e9eefc;
+      --muted:#aeb8d6;
+      --accent:#7aa6ff;
+      --ok:#53d38a;
+      --warn:#ffcc66;
+      --bad:#ff6b6b;
+      --border:rgba(255,255,255,.12);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius:16px;
+    }
+
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 20% 10%, rgba(122,166,255,.12), transparent 60%),
+                  radial-gradient(900px 500px at 80% 30%, rgba(83,211,138,.10), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+    }
+
+    .wrap{
+      max-width: 1100px;
+      margin: 28px auto;
+      padding: 0 16px 40px;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom: 10px;
+      flex-wrap:wrap;
+    }
+
+    h1{
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0;
+      letter-spacing:.2px;
+    }
+
+    select{
+      background: rgba(255,255,255,.06);
+      border:1px solid var(--border);
+      border-radius: 12px;
+      padding:10px 12px;
+      color: var(--text);
+      outline:none;
+      font-size: 14px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:16px;
+    }
+    @media (max-width: 900px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .card .hd{
+      padding: 14px 16px;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      background: rgba(255,255,255,.03);
+    }
+
+    .card .hd .title{
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .card .bd{ padding: 16px; }
+
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:flex-end;
+    }
+
+    label{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      font-size: 12px;
+      color: var(--muted);
+      min-width: 220px;
+    }
+
+    input[type="number"]{
+      background: rgba(255,255,255,.06);
+      border:1px solid var(--border);
+      border-radius: 12px;
+      padding:10px 12px;
+      color: var(--text);
+      outline:none;
+      font-size: 14px;
+    }
+    input[type="number"]:focus{
+      border-color: rgba(122,166,255,.55);
+      box-shadow: 0 0 0 3px rgba(122,166,255,.18);
+    }
+
+    .btns{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    button{
+      appearance:none;
+      border:1px solid var(--border);
+      background: rgba(122,166,255,.18);
+      color: var(--text);
+      font-weight: 700;
+      padding: 10px 14px;
+      border-radius: 12px;
+      cursor:pointer;
+      transition: transform .05s ease, background .15s ease, opacity .15s ease;
+      user-select:none;
+    }
+    button:hover{ background: rgba(122,166,255,.28); }
+    button:active{ transform: translateY(1px); }
+    button:disabled{ opacity:.45; cursor:not-allowed; }
+
+    .btn-secondary{
+      background: rgba(255,255,255,.08);
+    }
+    .btn-secondary:hover{ background: rgba(255,255,255,.12); }
+
+    .status{
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      font-size: 13px;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .status strong{ color: var(--text); }
+
+    .arena{
+      position: relative;
+      height: 240px;
+      border-radius: 16px;
+      border:1px solid var(--border);
+      overflow:hidden;
+
+      /* Tapete verde */
+      background:
+        radial-gradient(circle at 50% 30%, rgba(255,255,255,0.08), transparent 60%),
+        linear-gradient(180deg, #1f6f3d 0%, #155a30 60%, #104626 100%);
+    }
+
+    .spinCanvas{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      display:block;
+    }
+
+    .note{
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    table{
+      width:100%;
+      border-collapse: collapse;
+      overflow:hidden;
+      border-radius: 12px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.03);
+    }
+    th, td{
+      padding: 10px 10px;
+      font-size: 13px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      text-align:left;
+    }
+    th{
+      font-size: 12px;
+      letter-spacing:.3px;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: rgba(255,255,255,.04);
+    }
+    tr:last-child td{ border-bottom:none; }
+
+    .scroll{
+      max-height: 410px;
+      overflow:auto;
+      border-radius: 12px;
+    }
+
+    .two-col{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 900px){
+      .two-col{ grid-template-columns: 1fr; }
+    }
+
+    canvas.chart{
+      width:100%;
+      height: 260px;
+      background: rgba(255,255,255,.03);
+      border:1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    .hidden{ display:none !important; }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      font-size: 12px;
+      white-space:nowrap;
+    }
+    .dot{
+      width:9px; height:9px; border-radius:50%;
+      background: var(--warn);
+      box-shadow: 0 0 0 3px rgba(255,204,102,.18);
+    }
+    .dot.ok{
+      background: var(--ok);
+      box-shadow: 0 0 0 3px rgba(83,211,138,.16);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <h1 data-i18n="mainTitle">Peonza poligonal – simulador</h1>
+      <div>
+        <select id="langSelect" aria-label="Idioma">
+          <option value="eu">Euskara</option>
+          <option value="es">Español</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- Panel izquierda: control + animación -->
+      <section class="card">
+        <div class="hd">
+          <div class="title" data-i18n="controlTitle">Kontrola eta animazioa</div>
+          <div class="pill"><span class="dot" id="stateDot"></span><span id="stateText" data-i18n="ready">Prest</span></div>
+        </div>
+        <div class="bd">
+          <div class="controls">
+            <label>
+              <span data-i18n="nRollsLabel">Jaurtiketa kopurua (lagin-kopurua)</span>
+              <input id="nRolls" type="number" min="1" max="10000" step="1" value="30" />
+            </label>
+
+            <label>
+              <span data-i18n="facesLabel">Aurpegi kopurua (k)</span>
+              <input id="nFaces" type="number" min="2" max="200" step="1" value="12" />
+            </label>
+
+            <div class="btns">
+              <button id="btnInit" class="btn-secondary" data-i18n="initBtn">Hasieratu</button>
+              <button id="btnSpin" data-i18n="spinBtn">Peonza birarazi</button>
+              <button id="btnAuto" class="btn-secondary" data-i18n="autoBtn">Automatikoki birarazi</button>
+            </div>
+          </div>
+
+          <div class="status">
+            <div><span data-i18n="target">Helburua</span>: <strong id="targetN">30</strong></div>
+            <div><span data-i18n="progress">Aurrerapena</span>: <strong><span id="doneN">0</span>/<span id="targetN2">30</span></strong></div>
+            <div><span data-i18n="last">Azken emaitza</span>: <strong id="lastVal">—</strong></div>
+          </div>
+
+          <div style="height:14px"></div>
+
+          <div class="arena" aria-label="Área de animación">
+            <canvas id="spinCanvas" class="spinCanvas" width="900" height="520"></canvas>
+          </div>
+
+          <div class="note" data-i18n="note">
+            Oharrak: botoiak desgaitu egiten dira animazioan zehar. N biraketa osatutakoan, maiztasunak kalkulatzen dira eta barra-diagrama marrazten da.
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel derecha: tabla de resultados -->
+      <section class="card">
+        <div class="hd">
+          <div class="title" data-i18n="resultsTitle">Emaitzak</div>
+          <div class="pill"><span class="dot ok"></span><span data-i18n="accTable">Taula metatua</span></div>
+        </div>
+        <div class="bd">
+          <div class="scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th data-i18n="faceCol">Cara</th>
+                </tr>
+              </thead>
+              <tbody id="resultsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div style="height:16px"></div>
+
+    <!-- Panel inferior: probabilidades y gráfico -->
+    <section class="card hidden" id="finalBlock">
+      <div class="hd">
+        <div class="title" data-i18n="finalTitle">Probabilitate enpirikoak eta grafikoa</div>
+        <div class="pill"><span class="dot ok"></span><span data-i18n="done">Amaituta</span></div>
+      </div>
+      <div class="bd">
+        <div class="two-col">
+          <div>
+            <table>
+              <thead>
+                <tr>
+                  <th data-i18n="faceCol">Cara</th>
+                  <th data-i18n="absFreq">Maiztasun absolutua</th>
+                  <th data-i18n="relFreq">Maiztasun erlatiboa</th>
+                </tr>
+              </thead>
+              <tbody id="probBody"></tbody>
+            </table>
+          </div>
+          <div>
+            <canvas id="chart" class="chart" width="900" height="520" aria-label="Diagrama de barras"></canvas>
+            <div class="note" data-i18n="chartNote">
+              Grafikoak aurpegi bakoitzaren probabilitate enpirikoa (maiztasun erlatiboa) adierazten du.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+<script>
+(() => {
+  "use strict";
+
+  // ---------------- i18n ----------------
+  const I18N = {
+    es: {
+      mainTitle: "Peonza poligonal – simulador",
+      controlTitle: "Control y animación",
+      resultsTitle: "Resultados",
+      finalTitle: "Probabilidades empíricas y gráfico",
+      ready: "Listo",
+      spinning: "Girando…",
+      done: "Completado",
+      nRollsLabel: "Número de giros (tamaño de muestra)",
+      facesLabel: "Número de caras (k)",
+      initBtn: "Inicializar",
+      spinBtn: "Girar peonza",
+      autoBtn: "Girar automáticamente",
+      target: "Objetivo",
+      progress: "Progreso",
+      last: "Última cara",
+      note: "Notas: los botones se deshabilitan durante la animación. Al completar N giros, se calculan frecuencias y se dibuja el diagrama de barras.",
+      accTable: "Tabla acumulada",
+      faceCol: "Cara",
+      absFreq: "Frecuencia absoluta",
+      relFreq: "Frecuencia relativa",
+      chartNote: "El gráfico representa la probabilidad empírica (frecuencia relativa) de cada cara.",
+      chartTitle: "Probabilidad empírica por cara (barras)",
+      yLabel: "Probabilidad"
+    },
+    eu: {
+      mainTitle: "Peonza poligonala – simulagailua",
+      controlTitle: "Kontrola eta animazioa",
+      resultsTitle: "Emaitzak",
+      finalTitle: "Probabilitate enpirikoak eta grafikoa",
+      ready: "Prest",
+      spinning: "Biratzen…",
+      done: "Amaituta",
+      nRollsLabel: "Biraketa kopurua (lagin-kopurua)",
+      facesLabel: "Aurpegi kopurua (k)",
+      initBtn: "Hasieratu",
+      spinBtn: "Peonza birarazi",
+      autoBtn: "Automatikoki birarazi",
+      target: "Helburua",
+      progress: "Aurrerapena",
+      last: "Azken aurpegia",
+      note: "Oharrak: botoiak desgaitu egiten dira animazioan zehar. N biraketa osatutakoan, maiztasunak kalkulatzen dira eta barra-diagrama marrazten da.",
+      accTable: "Taula metatua",
+      faceCol: "Aurpegia",
+      absFreq: "Maiztasun absolutua",
+      relFreq: "Maiztasun erlatiboa",
+      chartNote: "Grafikoak aurpegi bakoitzaren probabilitate enpirikoa (maiztasun erlatiboa) adierazten du.",
+      chartTitle: "Aurpegi bakoitzaren probabilitate enpirikoa (barrak)",
+      yLabel: "Probabilitatea"
+    }
+  };
+
+  const $ = (sel) => document.querySelector(sel);
+  function clamp(n,a,b){ return Math.max(a, Math.min(b,n)); }
+
+  let lang = "eu";
+  const langSelect = $("#langSelect");
+
+  function applyI18n() {
+    document.documentElement.lang = lang;
+    document.querySelectorAll("[data-i18n]").forEach(el => {
+      const k = el.getAttribute("data-i18n");
+      if (I18N[lang] && I18N[lang][k]) el.textContent = I18N[lang][k];
+    });
+    // <title> no usa textContent visible en body
+    document.title = I18N[lang].mainTitle;
+  }
+
+  langSelect.value = lang;
+  langSelect.addEventListener("change", () => {
+    lang = langSelect.value;
+    applyI18n();
+    drawSpinner(); // redibuja textos si los hubiera (aquí no, pero refresca)
+    if (!$("#finalBlock").classList.contains("hidden")) drawBars();
+  });
+
+  // ---------------- estado ----------------
+  const nInput = $("#nRolls");
+  const facesInput = $("#nFaces");
+
+  const btnInit = $("#btnInit");
+  const btnSpin = $("#btnSpin");
+  const btnAuto = $("#btnAuto");
+
+  const targetN = $("#targetN");
+  const targetN2 = $("#targetN2");
+  const doneN = $("#doneN");
+  const lastVal = $("#lastVal");
+
+  const resultsBody = $("#resultsBody");
+  const finalBlock = $("#finalBlock");
+  const probBody = $("#probBody");
+
+  const stateDot = $("#stateDot");
+  const stateText = $("#stateText");
+
+  const spinCanvas = $("#spinCanvas");
+  const sctx = spinCanvas.getContext("2d");
+
+  const chart = $("#chart");
+  const cctx = chart.getContext("2d");
+
+  let target = 30;
+  let faces = 12;
+
+  let counts = [];
+  let results = [];
+
+  let animating = false;
+  let autoMode = false;
+  let stopAuto = false;
+
+  // spinner angle state
+  let angle = 0; // rad
+  let colors = [];
+
+  function setState(state){
+    // "ready" | "running" | "done"
+    if(state === "running"){
+      stateDot.classList.remove("ok");
+      stateDot.style.background = "var(--warn)";
+      stateDot.style.boxShadow = "0 0 0 3px rgba(255,204,102,.18)";
+      stateText.textContent = I18N[lang].spinning;
+    } else if(state === "done"){
+      stateDot.classList.add("ok");
+      stateDot.style.background = "var(--ok)";
+      stateDot.style.boxShadow = "0 0 0 3px rgba(83,211,138,.16)";
+      stateText.textContent = I18N[lang].done;
+    } else {
+      stateDot.classList.remove("ok");
+      stateDot.style.background = "var(--warn)";
+      stateDot.style.boxShadow = "0 0 0 3px rgba(255,204,102,.18)";
+      stateText.textContent = I18N[lang].ready;
+    }
+  }
+
+  function syncHeader(){
+    targetN.textContent = String(target);
+    targetN2.textContent = String(target);
+    doneN.textContent = String(results.length);
+
+    const finished = results.length >= target;
+    btnSpin.disabled = animating || finished || autoMode;
+    btnAuto.disabled = animating || finished || autoMode;
+  }
+
+  function hslColor(i, n){
+    const hue = (i * 360 / n);
+    // saturación/ligereza fijas para coherencia
+    return `hsl(${hue} 70% 55%)`;
+  }
+
+  function buildColors(){
+    colors = Array.from({length: faces}, (_, i) => hslColor(i, faces));
+  }
+
+  function resetAll(){
+    if(animating) return;
+
+    target = clamp(Math.trunc(Number(nInput.value) || 30), 1, 10000);
+    nInput.value = String(target);
+
+    faces = clamp(Math.trunc(Number(facesInput.value) || 12), 2, 200);
+    facesInput.value = String(faces);
+
+    counts = new Array(faces).fill(0);
+    results = [];
+    resultsBody.innerHTML = "";
+    probBody.innerHTML = "";
+    lastVal.textContent = "—";
+    finalBlock.classList.add("hidden");
+
+    autoMode = false;
+    stopAuto = false;
+    btnAuto.textContent = I18N[lang].autoBtn;
+
+    angle = 0;
+    buildColors();
+    setState("ready");
+    syncHeader();
+    drawSpinner();
+  }
+
+  // ---------------- dibujo peonza ----------------
+  function clearSpinner(){
+    sctx.clearRect(0,0,spinCanvas.width, spinCanvas.height);
+  }
+
+  function drawPointer(cx, cy, R){
+    // puntero fijo arriba (triángulo)
+    sctx.save();
+    sctx.translate(cx, cy);
+    sctx.fillStyle = "rgba(0,0,0,.55)";
+    sctx.beginPath();
+    sctx.moveTo(0, -R - 18);
+    sctx.lineTo(-14, -R + 10);
+    sctx.lineTo(14, -R + 10);
+    sctx.closePath();
+    sctx.fill();
+
+    sctx.fillStyle = "rgba(255,255,255,.85)";
+    sctx.beginPath();
+    sctx.moveTo(0, -R - 16);
+    sctx.lineTo(-12, -R + 8);
+    sctx.lineTo(12, -R + 8);
+    sctx.closePath();
+    sctx.fill();
+    sctx.restore();
+  }
+
+  function drawSpinner(){
+    clearSpinner();
+    const W = spinCanvas.width, H = spinCanvas.height;
+    const cx = W/2, cy = H/2 + 10;
+    const R = Math.min(W,H) * 0.30;
+
+    // sombra
+    sctx.fillStyle = "rgba(0,0,0,.25)";
+    sctx.beginPath();
+    sctx.ellipse(cx, cy + R*0.72, R*0.95, R*0.35, 0, 0, Math.PI*2);
+    sctx.fill();
+
+    // sectores triangulares
+    const dtheta = 2*Math.PI / faces;
+
+    for(let i=0;i<faces;i++){
+      const a0 = angle + i*dtheta;
+      const a1 = angle + (i+1)*dtheta;
+
+      sctx.beginPath();
+      sctx.moveTo(cx, cy);
+      sctx.lineTo(cx + R*Math.cos(a0), cy + R*Math.sin(a0));
+      sctx.lineTo(cx + R*Math.cos(a1), cy + R*Math.sin(a1));
+      sctx.closePath();
+
+      sctx.fillStyle = colors[i];
+      sctx.fill();
+
+      sctx.strokeStyle = "rgba(0,0,0,.35)";
+      sctx.lineWidth = 2;
+      sctx.stroke();
+
+      // etiqueta (cara) si no es enorme
+      if(faces <= 36){
+        const am = (a0+a1)/2;
+        const tx = cx + (R*0.62)*Math.cos(am);
+        const ty = cy + (R*0.62)*Math.sin(am);
+        sctx.fillStyle = "rgba(0,0,0,.65)";
+        sctx.font = "bold 18px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+        sctx.textAlign = "center";
+        sctx.textBaseline = "middle";
+        sctx.fillText(String(i+1), tx+1, ty+1);
+        sctx.fillStyle = "rgba(255,255,255,.92)";
+        sctx.fillText(String(i+1), tx, ty);
+      }
+    }
+
+    // círculo central (eje)
+    sctx.fillStyle = "rgba(255,255,255,.85)";
+    sctx.beginPath();
+    sctx.arc(cx, cy, R*0.12, 0, Math.PI*2);
+    sctx.fill();
+    sctx.strokeStyle = "rgba(0,0,0,.25)";
+    sctx.lineWidth = 2;
+    sctx.stroke();
+
+    // puntero fijo
+    drawPointer(cx, cy, R);
+  }
+
+  function randInt(a,b){ return a + Math.floor(Math.random()*(b-a+1)); }
+
+  function faceFromAngle(){
+    // puntero en ángulo -pi/2 (arriba). Sector i se define en [angle+i*dtheta, angle+(i+1)*dtheta).
+    // Queremos el i tal que el puntero caiga dentro, o equivalente:
+    // i = floor( (pointerAngle - angle) mod 2pi / dtheta )
+    const pointer = -Math.PI/2;
+    const dtheta = 2*Math.PI / faces;
+
+    let x = pointer - angle;
+    // normaliza a [0,2pi)
+    x = ((x % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+    let i = Math.floor(x / dtheta);
+    i = clamp(i, 0, faces-1);
+    return i; // 0..faces-1
+  }
+
+  function appendResult(faceIndex){
+    results.push(faceIndex);
+    counts[faceIndex]++;
+
+    const tr = document.createElement("tr");
+    const td1 = document.createElement("td");
+    const td2 = document.createElement("td");
+    td1.textContent = String(results.length);
+    td2.textContent = String(faceIndex + 1);
+    tr.appendChild(td1);
+    tr.appendChild(td2);
+    resultsBody.appendChild(tr);
+
+    lastVal.textContent = String(faceIndex + 1);
+    doneN.textContent = String(results.length);
+  }
+
+  function spinOnce(fast=false){
+    return new Promise((resolve) => {
+      animating = true;
+      setState("running");
+      syncHeader();
+
+      const duration = fast ? 220 : 950;
+      const start = performance.now();
+
+      // velocidad inicial aleatoria (rad/s) y freno suave
+      const w0 = (fast ? 18 : 10) + Math.random() * (fast ? 22 : 14);
+      // un offset aleatorio para evitar patrones
+      const extra = (Math.random() - 0.5) * 0.4;
+
+      function easeOutCubic(p){ return 1 - Math.pow(1-p, 3); }
+
+      function step(t){
+        const p = clamp((t-start)/duration, 0, 1);
+        const e = easeOutCubic(p);
+
+        // Integramos una velocidad decreciente de forma simple:
+        // angle = angle0 + w0 * durationSec * (1 - (1-e)*0.6) ... aproximación suave
+        const durationSec = duration/1000;
+        const w = w0 * (1 - e); // decae a 0
+        angle += (w * durationSec * 0.085) + extra*0.002; // factor ajustado visual
+
+        drawSpinner();
+
+        if(p < 1){
+          requestAnimationFrame(step);
+          return;
+        }
+
+        // Al finalizar, fijamos cara ganadora según el ángulo final
+        const fi = faceFromAngle();
+        appendResult(fi);
+
+        animating = false;
+
+        if(results.length >= target){
+          setState("done");
+          showFinalStats();
+        } else {
+          setState("ready");
+        }
+        syncHeader();
+        resolve();
+      }
+
+      requestAnimationFrame(step);
+    });
+  }
+
+  // ---------------- stats + chart ----------------
+  function showFinalStats(){
+    probBody.innerHTML = "";
+    const N = results.length || 1;
+
+    for(let i=0;i<faces;i++){
+      const c = counts[i];
+      const p = c / N;
+
+      const tr = document.createElement("tr");
+      const tdA = document.createElement("td");
+      const tdB = document.createElement("td");
+      const tdC = document.createElement("td");
+
+      tdA.textContent = String(i+1);
+      tdB.textContent = String(c);
+      tdC.textContent = (p*100).toFixed(2) + " %";
+
+      tr.appendChild(tdA);
+      tr.appendChild(tdB);
+      tr.appendChild(tdC);
+      probBody.appendChild(tr);
+    }
+
+    finalBlock.classList.remove("hidden");
+    drawBars();
+  }
+
+  function drawBars(){
+    const W = chart.width;
+    const H = chart.height;
+    cctx.clearRect(0,0,W,H);
+
+    const mL = 70, mR = 24, mT = 26, mB = 64;
+    const plotW = W - mL - mR;
+    const plotH = H - mT - mB;
+
+    const N = results.length || 1;
+    const probs = counts.map(c => c / N);
+    const maxY = Math.max(0.25, ...probs, 1/faces);
+    const yMax = Math.ceil(maxY * 10) / 10;
+
+    // ejes
+    cctx.strokeStyle = "rgba(255,255,255,0.20)";
+    cctx.lineWidth = 1;
+    cctx.beginPath();
+    cctx.moveTo(mL, mT);
+    cctx.lineTo(mL, mT + plotH);
+    cctx.lineTo(mL + plotW, mT + plotH);
+    cctx.stroke();
+
+    // rejilla + ticks
+    cctx.fillStyle = "rgba(255,255,255,0.75)";
+    cctx.font = "14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    cctx.textAlign = "right";
+    cctx.textBaseline = "middle";
+
+    const nGrid = 5;
+    for(let i=0;i<=nGrid;i++){
+      const y = mT + plotH - (plotH * i / nGrid);
+      cctx.strokeStyle = "rgba(255,255,255,0.10)";
+      cctx.beginPath();
+      cctx.moveTo(mL, y);
+      cctx.lineTo(mL + plotW, y);
+      cctx.stroke();
+
+      const val = (yMax * i / nGrid);
+      cctx.fillText(val.toFixed(2), mL - 10, y);
+    }
+
+    // barras
+    const gap = 12;
+    const barW = (plotW - gap*(faces+1)) / faces;
+    cctx.textAlign = "center";
+    cctx.textBaseline = "top";
+
+    for(let i=0;i<faces;i++){
+      const x = mL + gap + i*(barW + gap);
+      const h = (probs[i] / yMax) * plotH;
+      const y = mT + plotH - h;
+
+      cctx.fillStyle = colors[i];
+      cctx.fillRect(x, y, barW, h);
+
+      cctx.strokeStyle = "rgba(0,0,0,0.25)";
+      cctx.strokeRect(x, y, barW, h);
+
+      // etiquetas X: si hay muchas caras, mostramos solo algunas
+      if(faces <= 20 || i % Math.ceil(faces/20) === 0){
+        cctx.fillStyle = "rgba(255,255,255,0.85)";
+        cctx.fillText(String(i+1), x + barW/2, mT + plotH + 12);
+      }
+
+      // valor encima (solo si no hay demasiadas)
+      if(faces <= 20){
+        cctx.textBaseline = "bottom";
+        cctx.fillStyle = "rgba(255,255,255,0.92)";
+        cctx.fillText((probs[i]*100).toFixed(1)+"%", x + barW/2, y - 8);
+        cctx.textBaseline = "top";
+      }
+    }
+
+    // título
+    cctx.textAlign = "left";
+    cctx.textBaseline = "top";
+    cctx.fillStyle = "rgba(255,255,255,0.92)";
+    cctx.font = "16px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    cctx.fillText(I18N[lang].chartTitle, mL, 6);
+
+    // etiqueta Y
+    cctx.save();
+    cctx.translate(18, mT + plotH/2);
+    cctx.rotate(-Math.PI/2);
+    cctx.textAlign = "center";
+    cctx.textBaseline = "middle";
+    cctx.fillStyle = "rgba(255,255,255,0.75)";
+    cctx.font = "14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    cctx.fillText(I18N[lang].yLabel, 0, 0);
+    cctx.restore();
+  }
+
+  // ---------------- events ----------------
+  btnInit.addEventListener("click", () => resetAll());
+
+  btnSpin.addEventListener("click", async () => {
+    if(animating || autoMode) return;
+    if(results.length >= target){ syncHeader(); return; }
+    await spinOnce(false);
+  });
+
+  btnAuto.addEventListener("click", async () => {
+    if(animating) return;
+    if(results.length >= target){ syncHeader(); return; }
+
+    autoMode = true;
+    stopAuto = false;
+    btnAuto.textContent = I18N[lang].spinning;
+    syncHeader();
+
+    while(!stopAuto && results.length < target){
+      await spinOnce(true);
+      await new Promise(r => setTimeout(r, 0));
+    }
+
+    autoMode = false;
+    btnAuto.textContent = I18N[lang].autoBtn;
+    syncHeader();
+  });
+
+  nInput.addEventListener("change", () => { if(!animating) resetAll(); });
+  facesInput.addEventListener("change", () => { if(!animating) resetAll(); });
+
+  // init
+  applyI18n();
+  resetAll();
+
+})();
+</script>
+</body>
+</html>

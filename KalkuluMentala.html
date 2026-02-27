@@ -1,0 +1,1132 @@
+<!doctype html>
+<html lang="eu">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Crucigrama Kalkulu Mentala</title>
+  <style>
+    :root{ --cell:42px; --gap:4px; --bg:#0f172a; --text:#e5e7eb; --muted:#94a3b8;
+      --good:#22c55e; --bad:#ef4444; --accent:#60a5fa;
+      --block:#000000; --writeBg:#ffffff; --writeText:#000000;
+      --board:#d9ecff; --boardBorder:#b9d7ff; }
+    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:linear-gradient(180deg,var(--bg),#050816); color:var(--text); }
+    header{ padding:16px 16px 10px; display:flex; align-items:flex-end; justify-content:space-between;
+      gap:12px; flex-wrap:wrap; max-width:1200px; margin:0 auto; box-sizing:border-box; }
+    h1{ margin:0; font-size:18px; font-weight:900; }
+    .sub{ margin:4px 0 0; color:var(--muted); font-size:13px; }
+    .wrap{ display:grid; grid-template-columns: max-content 1fr; gap:14px;
+      align-items:start;
+      padding:12px 16px 18px;
+      max-width:1200px; margin:0 auto; box-sizing:border-box; }
+    @media (max-width:980px){ .wrap{ grid-template-columns:1fr; } }
+
+    /* Left panel (grid) should not waste horizontal space */
+    .wrap > section.card{ width: fit-content; }
+
+    .card{ background:rgba(17,24,39,.65); border:1px solid rgba(148,163,184,.15);
+      border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,.25); overflow:hidden; }
+    .cardHead{ padding:12px; border-bottom:1px solid rgba(148,163,184,.12);
+      display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+    .cardHead strong{ font-size:14px; }
+    .controls{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    button,select,input[type="checkbox"]{ font:inherit; }
+    button{ background:rgba(96,165,250,.18); border:1px solid rgba(96,165,250,.35); color:var(--text);
+      padding:8px 10px; border-radius:10px; cursor:pointer; font-weight:800; transition:.12s ease; }
+    button:hover{ transform:translateY(-1px); }
+    button.secondary{ background:rgba(148,163,184,.12); border-color:rgba(148,163,184,.25); }
+    button.danger{ background:rgba(239,68,68,.16); border-color:rgba(239,68,68,.35); }
+    select{ background:#0b1220; border:1px solid rgba(148,163,184,.35); color:var(--text);
+      padding:8px 10px; border-radius:10px; }
+    /* Improve dropdown contrast in Chrome/Edge */
+    select:focus{ outline:2px solid rgba(96,165,250,.35); outline-offset:2px; }
+    option, optgroup{ background:#0b1220; color:#e5e7eb; }
+
+    .grid{ display:grid; gap:var(--gap); padding:14px; justify-content:center; user-select:none;
+      background:var(--board); border:2px solid var(--boardBorder); border-radius:14px; }
+    .cell{ width:var(--cell); height:var(--cell); border-radius:10px; background:var(--writeBg);
+      border:1px solid rgba(0,0,0,.25); display:flex; align-items:center; justify-content:center; position:relative; }
+    .cell.block{ background:var(--block); border-color:rgba(0,0,0,.9); }
+    .cell input{ width:100%; height:100%; border:0; outline:0; background:transparent; color:var(--writeText);
+      text-align:center; font-size:18px; font-weight:900; caret-color:#000; }
+    .cell .idx{ position:absolute; top:4px; left:6px; font-size:10px; color:rgba(0,0,0,.55);
+      font-weight:900; pointer-events:none; }
+    .cell.active{ border-color:rgba(96,165,250,.85); box-shadow:0 0 0 3px rgba(96,165,250,.18) inset; }
+    .cell.inWord{ box-shadow:0 0 0 2px rgba(96,165,250,.20) inset; }
+    .cell.good{ border-color:rgba(34,197,94,.55); }
+    .cell.bad{ border-color:rgba(239,68,68,.55); }
+    .side{ display:grid; grid-template-rows:auto 1fr auto; min-height:480px; }
+    .pists{ display:grid; grid-template-columns:1fr; gap:10px; padding:12px; }
+    .twoCols{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    @media (max-width:520px){ .twoCols{ grid-template-columns:1fr; } }
+    .list{ background:rgba(2,6,23,.25); border:1px solid rgba(148,163,184,.12); border-radius:12px;
+      padding:10px; min-height:170px; }
+    .list h3{ margin:0 0 8px; font-size:13px; }
+    .clue{ display:flex; gap:8px; align-items:flex-start; padding:7px 8px; border-radius:10px; cursor:pointer;
+      border:1px solid transparent; }
+    .clue:hover{ background:rgba(148,163,184,.08); }
+    .clue.active{ background:rgba(96,165,250,.12); border-color:rgba(96,165,250,.28); }
+    .clue .n{ min-width:24px; height:20px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+      font-size:12px; font-weight:900; background:rgba(148,163,184,.12); border:1px solid rgba(148,163,184,.2); }
+    .clue .t{ font-size:13px; line-height:1.25; }
+    .clue .meta{ display:block; font-size:12px; color:var(--muted); margin-top:2px; }
+    
+    /* Two columns inside each clues list (H and V) */
+    #cluesH, #cluesV{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    @media (max-width:700px){
+      #cluesH, #cluesV{ grid-template-columns: 1fr; }
+    }
+.footer{ padding:12px; border-top:1px solid rgba(148,163,184,.12); display:flex; align-items:center;
+      justify-content:space-between; gap:10px; flex-wrap:wrap; }
+    .status{ font-size:13px; }
+    .opts{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; color:var(--muted); font-size:13px; }
+    label{ display:flex; gap:6px; align-items:center; cursor:pointer; user-select:none; }
+    .small{ font-size:12px; color:var(--muted); }
+    .badge{ display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid rgba(148,163,184,.35);
+      background:rgba(148,163,184,.10); font-size:12px; font-weight:900; }
+  
+    .cell.block .idx{ display:none; }
+</style>
+</head>
+
+<body>
+<header>
+  <div>
+    <h1 id="ui_title">Kalkulu mentaleko gurutzegrama</h1>
+    <div class="sub">
+      <span id="ui_sub">Pista guztiak kalkulatuak dira. Potentziak eta erroak: emaitza zenbakiz.</span>
+      <span class="badge" id="modeBadge">—</span>
+    </div>
+  </div>
+  <div class="controls">
+    <select id="langSel" title="Hizkuntza / Idioma">
+      <option value="eu" selected>Euskara</option>
+      <option value="es">Castellano</option>
+    </select>
+
+    <select id="sizeSel">
+      <option value="7">7×7</option>
+      <option value="9" selected>9×9</option>
+    </select>
+
+    <select id="themeSel">
+      <option value="integers" selected id="opt_integers">Osoak</option>
+      <option value="fractions" id="opt_fractions">Zatikiak</option>
+      <option value="percents" id="opt_percents">Ehunekoak</option>
+      <option value="powers" id="opt_powers">Berreketak</option>
+      <option value="roots" id="opt_roots">Erro zehatzak</option>
+    </select>
+
+    <select id="levelSel">
+      <option value="1">1</option>
+      <option value="2" selected>2</option>
+      <option value="3">3</option>
+    </select>
+
+    <button id="new">Berria</button>
+    <button class="secondary" id="checkClue">Pista egiaztatu</button>
+    <button class="secondary" id="checkAll">Dena egiaztatu</button>
+    <button class="danger" id="reveal">Soluzioa</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="card">
+    <div class="cardHead">
+      <strong id="ui_gridTitle">Sareta</strong>
+      <div class="small" id="hintLine">Klikatu gelaxka batean: pista aktibatu. Enter: pista egiaztatu.</div>
+    </div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <aside class="card side">
+    <div class="cardHead">
+      <strong id="ui_cluesTitle">Pistak</strong>
+      <div class="small"><span id="timer">⏱ 00:00</span> · <span id="score">✅ 0</span></div>
+    </div>
+
+    <div class="pists">
+      <div class="twoCols">
+        <div class="list">
+          <h3 id="ui_horz">Horizontalak</h3>
+          <div id="cluesH"></div>
+        </div>
+        <div class="list">
+          <h3 id="ui_vert">Bertikalak</h3>
+          <div id="cluesV"></div>
+        </div>
+      </div>
+      <div class="list" style="min-height:auto;">
+        <h3 id="ui_active">Pista aktiboa</h3>
+        <div id="activeClue" class="small">—</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="status" id="status">Egoera: <b>martxan</b></div>
+      <div class="opts">
+        <label><input type="checkbox" id="liveMark" checked><span id="ui_mark">akatsak markatu</span></label>
+        <label><input type="checkbox" id="autoAdvance" checked><span id="ui_auto">auto-aurrerapena</span></label>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<script>
+/* =======================
+   i18n (default: Euskara)
+   ======================= */
+const I18N = {
+  eu: {
+    title: "Kalkulu mentaleko gurutzegrama",
+    sub: "Pista guztiak kalkulatuak dira. Potentziak eta erroak: emaitza zenbakiz.",
+    gridTitle: "Sareta",
+    cluesTitle: "Pistak",
+    horz: "Horizontalak",
+    vert: "Bertikalak",
+    active: "Pista aktiboa",
+    hint: "Klikatu gelaxka batean: pista aktibatu. Enter: pista egiaztatu.",
+    new: "Berria",
+    checkClue: "Pista egiaztatu",
+    checkAll: "Dena egiaztatu",
+    reveal: "Soluzioa",
+    mark: "akatsak markatu",
+    auto: "auto-aurrerapena",
+    state: "Egoera",
+    state_running: "martxan",
+    state_ok: "pista zuzena",
+    state_err_clue: "pistan akatsak daude",
+    state_err: "akatsak daude",
+    state_missing: "gelaxkak falta dira",
+    state_done: "amaituta",
+    state_shown: "Soluzioa erakutsita",
+    mode_integers: "Modua: osoak",
+    mode_fractions: "Modua: zatikiak (a/b)",
+    mode_percents: "Modua: ehunekoak (n%)",
+    mode_powers: "Modua: potentziak (emaitza)",
+    mode_roots: "Modua: erro zehatzak (emaitza)",
+    calc: "Kalkulatu",
+    simplify: "Kalkulatu eta sinplifikatu",
+    percent_of: "Kalkulatu ehunekoa",
+    discount: "Kalkulatu deskontuaren ehunekoa"
+  },
+  es: {
+    title: "Crucigrama de cálculo mental",
+    sub: "Todas las pistas son de calcular. Potencias y raíces: resultado numérico.",
+    gridTitle: "Rejilla",
+    cluesTitle: "Pistas",
+    horz: "Horizontales",
+    vert: "Verticales",
+    active: "Pista activa",
+    hint: "Clic en una casilla: activa pista. Enter: comprueba pista.",
+    new: "Nuevo",
+    checkClue: "Comprobar pista",
+    checkAll: "Comprobar todo",
+    reveal: "Solución",
+    mark: "marcar errores",
+    auto: "auto-avance",
+    state: "Estado",
+    state_running: "en curso",
+    state_ok: "pista correcta",
+    state_err_clue: "hay errores en la pista",
+    state_err: "hay errores",
+    state_missing: "faltan casillas",
+    state_done: "terminado",
+    state_shown: "solución mostrada",
+    mode_integers: "Modo: enteros",
+    mode_fractions: "Modo: fracciones (a/b)",
+    mode_percents: "Modo: porcentajes (n%)",
+    mode_powers: "Modo: potencias (resultado)",
+    mode_roots: "Modo: raíces exactas (resultado)",
+    calc: "Calcula",
+    simplify: "Calcula y simplifica",
+    percent_of: "Calcula el porcentaje",
+    discount: "Calcula el % de descuento"
+  }
+};
+
+let LANG = "eu";
+function T(k){ return (I18N[LANG] && I18N[LANG][k]) ? I18N[LANG][k] : k; }
+function applyLanguageUI(){
+  document.documentElement.lang = LANG;
+  document.getElementById('ui_title').textContent = T('title');
+  document.getElementById('ui_sub').textContent = T('sub');
+  document.getElementById('ui_gridTitle').textContent = T('gridTitle');
+  document.getElementById('ui_cluesTitle').textContent = T('cluesTitle');
+  document.getElementById('ui_horz').textContent = T('horz');
+  document.getElementById('ui_vert').textContent = T('vert');
+  document.getElementById('ui_active').textContent = T('active');
+  document.getElementById('hintLine').textContent = T('hint');
+  document.getElementById('new').textContent = T('new');
+  document.getElementById('checkClue').textContent = T('checkClue');
+  document.getElementById('checkAll').textContent = T('checkAll');
+  document.getElementById('reveal').textContent = T('reveal');
+  document.getElementById('ui_mark').textContent = T('mark');
+  document.getElementById('ui_auto').textContent = T('auto');
+
+  // Opciones de tema visibles (títulos)
+  document.getElementById('opt_integers').textContent = (LANG==='eu') ? "Osoak" : "Enteros";
+  document.getElementById('opt_fractions').textContent = (LANG==='eu') ? "Zatikiak" : "Fracciones";
+  document.getElementById('opt_percents').textContent  = (LANG==='eu') ? "Ehunekoak" : "Porcentajes";
+  document.getElementById('opt_powers').textContent    = (LANG==='eu') ? "Berreketak" : "Potencias";
+  document.getElementById('opt_roots').textContent     = (LANG==='eu') ? "Erro zehatzak" : "Raíces exactas";
+}
+
+/* =======================
+   Patterns (multiple)
+   ======================= */
+// Each size maps to an array of patterns. We'll pick one randomly on "Nuevo".
+const PATTERNS = {
+  7: [
+    [
+      [0,0,1,0,0,1,0],
+      [0,0,0,0,1,0,0],
+      [1,0,0,0,0,0,1],
+      [0,0,0,1,0,0,0],
+      [0,1,0,0,0,1,0],
+      [0,0,0,0,0,0,0],
+      [1,0,0,1,0,0,1],
+    ],
+    [
+      [0,0,0,1,0,0,0],
+      [0,1,0,0,0,1,0],
+      [0,0,0,0,0,0,0],
+      [1,0,0,1,0,0,1],
+      [0,0,0,0,0,0,0],
+      [0,1,0,0,0,1,0],
+      [0,0,0,1,0,0,0],
+    ]
+  ],
+  9: [
+    // Pattern 1 (balanced)
+    [
+      [0,0,1,0,0,0,1,0,0],
+      [0,0,0,0,1,0,0,0,0],
+      [1,0,0,0,0,0,0,0,1],
+      [0,1,0,0,1,0,0,1,0],
+      [0,0,0,1,0,1,0,0,0],
+      [0,1,0,0,1,0,0,1,0],
+      [1,0,0,0,0,0,0,0,1],
+      [0,0,0,0,1,0,0,0,0],
+      [0,0,1,0,0,0,1,0,0],
+    ],
+    // Pattern 2 (more 2–3 length slots)
+    [
+      [0,0,1,0,1,0,1,0,0],
+      [0,0,0,0,0,0,0,0,0],
+      [1,0,1,0,0,0,1,0,1],
+      [0,0,0,1,0,1,0,0,0],
+      [1,0,0,0,0,0,0,0,1],
+      [0,0,0,1,0,1,0,0,0],
+      [1,0,1,0,0,0,1,0,1],
+      [0,0,0,0,0,0,0,0,0],
+      [0,0,1,0,1,0,1,0,0],
+    ],
+    // Pattern 3 (central cross, many medium slots)
+    [
+      [0,0,0,1,0,1,0,0,0],
+      [0,1,0,0,0,0,0,1,0],
+      [0,0,0,0,1,0,0,0,0],
+      [1,0,0,0,0,0,0,0,1],
+      [0,0,1,0,0,0,1,0,0],
+      [1,0,0,0,0,0,0,0,1],
+      [0,0,0,0,1,0,0,0,0],
+      [0,1,0,0,0,0,0,1,0],
+      [0,0,0,1,0,1,0,0,0],
+    ],
+    // Pattern 4 (denser, forces shorter answers -> good for powers/roots results)
+    [
+      [0,1,0,0,1,0,0,1,0],
+      [0,0,0,1,0,1,0,0,0],
+      [1,0,0,0,0,0,0,0,1],
+      [0,0,1,0,1,0,1,0,0],
+      [0,1,0,0,0,0,0,1,0],
+      [0,0,1,0,1,0,1,0,0],
+      [1,0,0,0,0,0,0,0,1],
+      [0,0,0,1,0,1,0,0,0],
+      [0,1,0,0,1,0,0,1,0],
+    ],
+    // Pattern 5 (open rows, fewer blocks -> longer slots)
+    [
+      [0,0,0,0,1,0,0,0,0],
+      [0,1,0,0,0,0,0,1,0],
+      [0,0,0,1,0,1,0,0,0],
+      [0,0,1,0,0,0,1,0,0],
+      [1,0,0,0,1,0,0,0,1],
+      [0,0,1,0,0,0,1,0,0],
+      [0,0,0,1,0,1,0,0,0],
+      [0,1,0,0,0,0,0,1,0],
+      [0,0,0,0,1,0,0,0,0],
+    ],
+  ]
+};
+
+/* =======================
+   State
+   ======================= */
+let SIZE = 9;
+let BLOCKS = []; // chosen pattern -> boolean matrix
+let cells = [];
+let answers = [];
+let current = { dir: 'H', clueId: null, positions: [] };
+let cluesH = [];
+let cluesV = [];
+let t0 = Date.now();
+let timerId = null;
+let okCount = 0;
+
+function pad2(n){ return String(n).padStart(2,'0'); }
+function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function inBounds(r,c){ return r>=0 && r<SIZE && c>=0 && c<SIZE; }
+function escapeHtml(s){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+function setScore(n){ okCount=n; document.getElementById('score').textContent=`✅ ${okCount}`; }
+function setStatus(key){
+  document.getElementById('status').innerHTML = `${T('state')}: <b>${escapeHtml(T(key))}</b>`;
+}
+function startTimer(){
+  if(timerId) clearInterval(timerId);
+  t0 = Date.now();
+  timerId = setInterval(() => {
+    const dt = Math.floor((Date.now() - t0)/1000);
+    document.getElementById('timer').textContent = `⏱ ${pad2(Math.floor(dt/60))}:${pad2(dt%60)}`;
+  }, 500);
+}
+function cellAt(r,c){ return cells[r*SIZE + c]; }
+
+/* =======================
+   Grid build
+   ======================= */
+function buildGrid(){
+  const grid = document.getElementById('grid');
+  grid.innerHTML='';
+  grid.style.gridTemplateColumns = `repeat(${SIZE}, var(--cell))`;
+  grid.style.gridTemplateRows = `repeat(${SIZE}, var(--cell))`;
+
+  cells=[];
+  for(let r=0;r<SIZE;r++){
+    for(let c=0;c<SIZE;c++){
+      const el=document.createElement('div');
+      el.className='cell'+(BLOCKS[r][c]?' block':'');
+      const idx=document.createElement('div'); idx.className='idx'; idx.textContent='';
+      el.appendChild(idx);
+
+      let input=null;
+      if(!BLOCKS[r][c]){
+        input=document.createElement('input');
+        input.maxLength=1;
+        input.autocomplete='off';
+        input.spellcheck=false;
+        input.addEventListener('keydown',(e)=>onKeyDown(e,r,c));
+        input.addEventListener('input',(e)=>onInput(e,r,c));
+        el.addEventListener('click',()=>activateFromCell(r,c));
+        el.appendChild(input);
+      }
+
+      grid.appendChild(el);
+      cells.push({r,c, el, input, block:BLOCKS[r][c], idx});
+    }
+  }
+}
+
+/* =======================
+   Slots
+   ======================= */
+function findSlots(){
+  const slotsH=[], slotsV=[];
+  let id=1;
+
+  for(let r=0;r<SIZE;r++){
+    let c=0;
+    while(c<SIZE){
+      while(c<SIZE && BLOCKS[r][c]) c++;
+      const start=c;
+      while(c<SIZE && !BLOCKS[r][c]) c++;
+      const len=c-start;
+      if(len>=2) slotsH.push({id:id++, dir:'H', r, c:start, len});
+    }
+  }
+  for(let c=0;c<SIZE;c++){
+    let r=0;
+    while(r<SIZE){
+      while(r<SIZE && BLOCKS[r][c]) r++;
+      const start=r;
+      while(r<SIZE && !BLOCKS[r][c]) r++;
+      const len=r-start;
+      if(len>=2) slotsV.push({id:id++, dir:'V', r:start, c, len});
+    }
+  }
+  return {slotsH, slotsV};
+}
+
+/* =======================
+   Theme engine
+   - integers: digits only
+   - powers/roots: digits only (RESULT)
+   - fractions: digits + '/'
+   - percents: digits + '%'
+   ======================= */
+function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ [a,b]=[b,a%b]; } return a; }
+function simpFrac(p,q){ const g=gcd(p,q); return [p/g, q/g]; }
+
+function themeIntegers(len, level){
+  const min=Math.pow(10,len-1), max=Math.pow(10,len)-1;
+  const modes = (level===1)?['add','sub','mul','div']
+              :(level===2)?['add','sub','mul','div','mix1']
+              :['add','sub','mul','div','mix1','mix2'];
+
+  for(let tries=0; tries<350; tries++){
+    const mode=modes[randInt(0,modes.length-1)];
+    let text='', v=null;
+
+    if(mode==='add'){
+      const a=randInt(min,max), b=randInt(1,Math.min(99,max));
+      v=a+b; if(v<min||v>max) continue;
+      text=`${T('calc')}: ${a} + ${b}`;
+    }
+    if(mode==='sub'){
+      const a=randInt(min,max), b=randInt(1,Math.min(99,a-1));
+      v=a-b; if(v<min||v>max) continue;
+      text=`${T('calc')}: ${a} − ${b}`;
+    }
+    if(mode==='mul'){
+      const mmax=(level===1)?9:(level===2?12:15);
+      const b=randInt(2,mmax);
+      const aMin=Math.ceil(min/b), aMax=Math.floor(max/b);
+      if(aMin>aMax) continue;
+      const a=randInt(aMin,aMax);
+      v=a*b;
+      text=`${T('calc')}: ${a} × ${b}`;
+    }
+    if(mode==='div'){
+      const dmax=(level===1)?9:(level===2?12:15);
+      const d=randInt(2,dmax);
+      const q=randInt(min,max);
+      const dividend=q*d;
+      if(level<=2 && dividend>999) continue;
+      v=q;
+      text=`${T('calc')}: ${dividend} ÷ ${d}`;
+    }
+    if(mode==='mix1'){
+      const b=randInt(2,level===2?12:15);
+      const aMin=Math.ceil(min/b), aMax=Math.floor(max/b);
+      if(aMin>aMax) continue;
+      const a=randInt(aMin,aMax);
+      const prod=a*b;
+      const c=randInt(1,Math.min(99,prod-1));
+      const plus=Math.random()<0.5;
+      v=plus?prod+c:prod-c;
+      if(v<min||v>max) continue;
+      text=`${T('calc')}: (${a}×${b}) ${plus?'+':'−'} ${c}`;
+    }
+    if(mode==='mix2'){
+      const a=randInt(min,max), b=randInt(1,99), c=randInt(1,99);
+      v=a+b-c; if(v<min||v>max) continue;
+      text=`${T('calc')}: ${a} + ${b} − ${c}`;
+    }
+
+    const s=String(v);
+    if(s.length===len) return { text, answerString:s };
+  }
+
+  // calculable fallback
+  const a=randInt(min, max-9), b=randInt(1,9);
+  const v=a+b;
+  return { text:`${T('calc')}: ${a} + ${b}`, answerString:String(v) };
+}
+
+function themePowers(len, level){
+  // RESULT numeric, digits only
+  const min=Math.pow(10,len-1), max=Math.pow(10,len)-1;
+  const baseRange = (level===1) ? [2,9] : (level===2 ? [2,12] : [2,15]);
+  const expRange  = (level===1) ? [2,4] : (level===2 ? [2,5] : [2,6]);
+
+  for(let tries=0; tries<1400; tries++){
+    const a=randInt(baseRange[0], baseRange[1]);
+    const b=randInt(expRange[0], expRange[1]);
+    const val = Math.pow(a,b);
+    if(!Number.isFinite(val)) continue;
+    if(val<min || val>max) continue;
+    const s=String(Math.trunc(val));
+    if(s.length!==len) continue;
+    return { text:`${T('calc')}: ${a}^${b}`, answerString:s };
+  }
+
+  // squares/cubes fallback
+  for(let tries=0; tries<1400; tries++){
+    const a=randInt(2,20);
+    const b=(level===1)?2:(Math.random()<0.7?2:3);
+    const val=Math.pow(a,b);
+    if(val<min||val>max) continue;
+    const s=String(val);
+    if(s.length!==len) continue;
+    return { text:`${T('calc')}: ${a}^${b}`, answerString:s };
+  }
+
+  return themeIntegers(len, level);
+}
+
+function themeRoots(len, level){
+  // RESULT numeric, digits only. Pista: √(k²) exacta.
+  const min=Math.pow(10,len-1), max=Math.pow(10,len)-1;
+  const kMin=Math.max(min,2);
+  const kMax=Math.max(kMin,max);
+
+  for(let tries=0; tries<1600; tries++){
+    const k=randInt(kMin,kMax);
+    const n=k*k;
+    if(level===1 && n>9999) continue;
+    if(level===2 && n>999999) continue;
+    const s=String(k);
+    if(s.length!==len) continue;
+    return { text:`${T('calc')}: √${n}`, answerString:s };
+  }
+
+  // classic fallback
+  for(let tries=0; tries<1600; tries++){
+    const k=randInt(10,99);
+    const n=k*k;
+    const s=String(k);
+    if(s.length!==len) continue;
+    return { text:`${T('calc')}: √${n}`, answerString:s };
+  }
+
+  return themeIntegers(len, level);
+}
+
+function themeFractions(len, level){
+  // answer "a/b" simplified; len 3..5 typical
+  if(!(len===3||len===4||len===5)) return themeIntegers(len, level);
+
+  for(let tries=0; tries<900; tries++){
+    let aDigits=1,bDigits=1;
+    if(len===3){ aDigits=1; bDigits=1; }
+    if(len===4){ if(Math.random()<0.5){aDigits=2;bDigits=1;} else {aDigits=1;bDigits=2;} }
+    if(len===5){ aDigits=2; bDigits=2; }
+
+    const aMin=Math.pow(10,aDigits-1), aMax=Math.pow(10,aDigits)-1;
+    const bMin=Math.pow(10,bDigits-1), bMax=Math.pow(10,bDigits)-1;
+
+    let p=randInt(aMin,aMax), q=randInt(bMin,bMax);
+    if(q===0) continue;
+    let [sp,sq]=simpFrac(p,q);
+    const s=`${sp}/${sq}`;
+    if(s.length!==len) continue;
+
+    const mode = (level===1) ? 'simplify'
+                : (level===2) ? ['simplify','add','mul'][randInt(0,2)]
+                : ['simplify','add','sub','mul','div'][randInt(0,4)];
+
+    let text;
+    if(mode==='simplify'){
+      const k=randInt(2,9);
+      text=`${T('simplify')}: ${sp*k}/${sq*k}`;
+    } else if(mode==='add'){
+      const u=randInt(1,9), v=randInt(2,12);
+      const [su,sv]=simpFrac(u,v);
+      const num = sp*sv - su*sq;
+      const den = sq*sv;
+      if(den===0 || num<=0) continue;
+      const [sx,sy]=simpFrac(num,den);
+      const checkNum = su*sy + sx*sv;
+      const checkDen = sv*sy;
+      const [cp,cq2]=simpFrac(checkNum,checkDen);
+      if(cp!==sp || cq2!==sq) continue;
+      text=`${T('simplify')}: ${su}/${sv} + ${sx}/${sy}`;
+    } else if(mode==='sub'){
+      const u=randInt(1,9), v=randInt(2,12);
+      const [su,sv]=simpFrac(u,v);
+      const num = su*sq - sp*sv;
+      const den = sv*sq;
+      if(den===0 || num<=0) continue;
+      const [sx,sy]=simpFrac(num,den);
+      const checkNum = su*sy - sx*sv;
+      const checkDen = sv*sy;
+      const [cp,cq2]=simpFrac(checkNum,checkDen);
+      if(cp!==sp || cq2!==sq) continue;
+      text=`${T('simplify')}: ${su}/${sv} − ${sx}/${sy}`;
+    } else if(mode==='mul'){
+      const a=randInt(1,9), b=randInt(2,12);
+      const [sa,sb]=simpFrac(a,b);
+      const num = sp*sb;
+      const den = sq*sa;
+      if(den===0) continue;
+      const [sx,sy]=simpFrac(num,den);
+      const checkNum = sa*sx;
+      const checkDen = sb*sy;
+      const [cp,cq2]=simpFrac(checkNum,checkDen);
+      if(cp!==sp || cq2!==sq) continue;
+      text=`${T('simplify')}: ${sa}/${sb} × ${sx}/${sy}`;
+    } else { // div
+      const a=randInt(1,9), b=randInt(2,12);
+      const [sa,sb]=simpFrac(a,b);
+      const sx0 = sa*sq;
+      const sy0 = sb*sp;
+      if(sx0<=0||sy0<=0) continue;
+      const [sx,sy]=simpFrac(sx0,sy0);
+      const checkNum = sa*sy;
+      const checkDen = sb*sx;
+      const [cp,cq2]=simpFrac(checkNum,checkDen);
+      if(cp!==sp || cq2!==sq) continue;
+      text=`${T('simplify')}: ${sa}/${sb} ÷ ${sx}/${sy}`;
+    }
+
+    return { text, answerString:s };
+  }
+
+  return themeIntegers(len, level);
+}
+
+function themePercents(len, level){
+  // answer "n%" (len 2..4 typical)
+  if(len<2 || len>4) return themeIntegers(len, level);
+
+  for(let tries=0; tries<900; tries++){
+    let n;
+    if(len===2) n=randInt(1,9);
+    if(len===3) n=randInt(10,99);
+    if(len===4) n=randInt(100,999);
+    const s=`${n}%`;
+    if(s.length!==len) continue;
+
+    // We must ask for n% as result, so: "What percent is A of B?" or "discount percent"
+    const mode = (level===1) ? 'ratio'
+                : (level===2) ? (Math.random()<0.5?'ratio':'discount')
+                : ['ratio','discount'][randInt(0,1)];
+
+    let text;
+    let B = (len<=3) ? randInt(100, 900) : randInt(1000, 9000);
+    let A = B*n/100;
+    if(A !== Math.round(A)) continue;
+    A = Math.round(A);
+    if(A===0) continue;
+
+    if(mode==='ratio'){
+      text = `${T('percent_of')}: ${A} / ${B}`;
+    } else {
+      const I = B;
+      const F = I - A;
+      text = `${T('discount')}: ${I} → ${F}`;
+    }
+
+    return { text, answerString:s };
+  }
+
+  return themeIntegers(len, level);
+}
+
+function makeThemedClue(len, theme, level){
+  if(theme==='integers') return themeIntegers(len, level);
+  if(theme==='fractions') return themeFractions(len, level);
+  if(theme==='percents') return themePercents(len, level);
+  if(theme==='powers') return themePowers(len, level);
+  if(theme==='roots') return themeRoots(len, level);
+  return themeIntegers(len, level);
+}
+
+/* =======================
+   Input filter
+   ======================= */
+function allowedChar(ch, theme){
+  if(!ch) return '';
+  if(ch.length>1) ch=ch[ch.length-1];
+
+  // digits-only themes
+  if(theme==='integers' || theme==='powers' || theme==='roots'){
+    return /[0-9]/.test(ch) ? ch : '';
+  }
+  if(theme==='fractions') return (/[0-9]/.test(ch) || ch==='/') ? ch : '';
+  if(theme==='percents')  return (/[0-9]/.test(ch) || ch==='%') ? ch : '';
+  return /[0-9]/.test(ch) ? ch : '';
+}
+
+/* =======================
+   Generation
+   ======================= */
+function pickRandomPattern(size){
+  const list = PATTERNS[size];
+  const p = list[randInt(0, list.length-1)];
+  return p.map(row => row.map(x => !!x));
+}
+
+function setModeBadge(){
+  const theme = document.getElementById('themeSel').value;
+  document.getElementById('modeBadge').textContent =
+    theme==='integers' ? T('mode_integers') :
+    theme==='fractions' ? T('mode_fractions') :
+    theme==='percents' ? T('mode_percents') :
+    theme==='powers' ? T('mode_powers') :
+    theme==='roots' ? T('mode_roots') : '—';
+}
+
+function generatePuzzle(){
+  const theme = document.getElementById('themeSel').value;
+  const level = Number(document.getElementById('levelSel').value);
+  setModeBadge();
+
+  answers = Array.from({length: SIZE}, () => Array(SIZE).fill(null));
+  const {slotsH, slotsV} = findSlots();
+  const allSlots = [...slotsH, ...slotsV].sort((x,y)=> y.len - x.len);
+
+  const slotMeta = new Map();
+
+  for(const slot of allSlots){
+    const positions=[];
+    for(let k=0;k<slot.len;k++){
+      positions.push([ slot.r + (slot.dir==='V'?k:0), slot.c + (slot.dir==='H'?k:0) ]);
+    }
+
+    let chosen=null;
+    for(let tries=0; tries<1200; tries++){
+      const ex = makeThemedClue(slot.len, theme, level);
+      const s = ex.answerString;
+      if(!s || s.length!==slot.len) continue;
+
+      let ok=true;
+      for(let i=0;i<s.length;i++){
+        const [rr,cc]=positions[i];
+        const existing=answers[rr][cc];
+        if(existing!==null && existing!==s[i]){ ok=false; break; }
+      }
+      if(!ok) continue;
+
+      chosen=ex;
+      for(let i=0;i<s.length;i++){
+        const [rr,cc]=positions[i];
+        answers[rr][cc]=s[i];
+      }
+      slotMeta.set(slot.id, {...slot, positions, text: ex.text, answerString:s});
+      break;
+    }
+
+    if(!chosen){
+      // hard fallback: integers (still CALCULA)
+      for(let tries=0; tries<1500; tries++){
+        const ex2 = themeIntegers(slot.len, level);
+        const s2 = ex2.answerString;
+        let ok2=true;
+        for(let i=0;i<s2.length;i++){
+          const [rr,cc]=positions[i];
+          const existing=answers[rr][cc];
+          if(existing!==null && existing!==s2[i]){ ok2=false; break; }
+        }
+        if(!ok2) continue;
+        for(let i=0;i<s2.length;i++){
+          const [rr,cc]=positions[i];
+          answers[rr][cc]=s2[i];
+        }
+        slotMeta.set(slot.id, {...slot, positions, text: ex2.text, answerString:s2});
+        break;
+      }
+    }
+  }
+
+  // numbering
+  const startNumbers=new Map();
+  let n=1;
+  const isStartH=(r,c)=> !BLOCKS[r][c] && ((c===0)||BLOCKS[r][c-1]) && (c+1<SIZE && !BLOCKS[r][c+1]);
+  const isStartV=(r,c)=> !BLOCKS[r][c] && ((r===0)||BLOCKS[r-1][c]) && (r+1<SIZE && !BLOCKS[r+1][c]);
+  for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++) if(isStartH(r,c)||isStartV(r,c)) startNumbers.set(`${r},${c}`, n++);
+
+  const h=[], v=[];
+  for(const slot of slotMeta.values()){
+    const num = startNumbers.get(`${slot.r},${slot.c}`) ?? slot.id;
+    const clue={ id:slot.id, num, dir:slot.dir, r:slot.r, c:slot.c, len:slot.len,
+      positions:slot.positions, text:slot.text, answerString:slot.answerString };
+    (slot.dir==='H'?h:v).push(clue);
+  }
+  h.sort((a,b)=>a.num-b.num); v.sort((a,b)=>a.num-b.num);
+  cluesH=h; cluesV=v;
+
+  for(const cell of cells){
+    if(cell.block){ cell.idx.textContent=''; continue; }
+    const key=`${cell.r},${cell.c}`;
+    cell.idx.textContent = startNumbers.has(key) ? String(startNumbers.get(key)) : '';
+  }
+
+  renderClues();
+  clearInputs();
+  setScore(0);
+  setStatus('state_running');
+  startTimer();
+
+  const first=cluesH[0]||cluesV[0];
+  if(first) activateClue(first.dir, first.id);
+}
+
+/* =======================
+   Clues UI
+   ======================= */
+function renderClues(){
+  const boxH=document.getElementById('cluesH');
+  const boxV=document.getElementById('cluesV');
+  boxH.innerHTML=''; boxV.innerHTML='';
+
+  const add=(container, clue)=>{
+    const div=document.createElement('div');
+    div.className='clue';
+    div.dataset.dir=clue.dir;
+    div.dataset.id=clue.id;
+    div.addEventListener('click',()=>activateClue(clue.dir, clue.id));
+
+    const n=document.createElement('div'); n.className='n'; n.textContent=clue.num;
+    const t=document.createElement('div'); t.className='t';
+    t.innerHTML = `${escapeHtml(clue.text)} <span class="meta">(${clue.len})</span>`;
+
+    div.appendChild(n); div.appendChild(t);
+    container.appendChild(div);
+  };
+
+  for(const c of cluesH) add(boxH,c);
+  for(const c of cluesV) add(boxV,c);
+  updateActiveCluePanel();
+}
+
+function getClue(dir,id){ return (dir==='H'?cluesH:cluesV).find(x=>x.id===id)||null; }
+
+function activateClue(dir,id){
+  current.dir=dir; current.clueId=id;
+  const clue=getClue(dir,id); if(!clue) return;
+  current.positions=clue.positions;
+
+  document.querySelectorAll('.clue').forEach(el=>{
+    const same = (el.dataset.dir===dir && Number(el.dataset.id)===id);
+    el.classList.toggle('active', same);
+  });
+
+  highlightWord();
+  updateActiveCluePanel();
+
+  for(const [r,c] of current.positions){
+    const cell=cellAt(r,c);
+    if(cell.input.value===''){ cell.input.focus(); return; }
+  }
+  const [r0,c0]=current.positions[0];
+  cellAt(r0,c0).input.focus();
+}
+
+function updateActiveCluePanel(){
+  const box=document.getElementById('activeClue');
+  if(!current.clueId){ box.textContent='—'; return; }
+  const clue=getClue(current.dir,current.clueId);
+  box.innerHTML = clue ? `<b>${clue.num}${clue.dir==='H'?'→':'↓'}</b> ${escapeHtml(clue.text)} <span style="color:var(--muted)">(${clue.len})</span>` : '—';
+}
+
+function highlightWord(){
+  for(const cell of cells) cell.el.classList.remove('active','inWord');
+  for(const [r,c] of current.positions) cellAt(r,c).el.classList.add('inWord');
+  const a=document.activeElement;
+  if(a && a.tagName==='INPUT'){
+    const idx=cells.findIndex(x=>x.input===a);
+    if(idx>=0) cells[idx].el.classList.add('active');
+  }
+}
+
+function activateFromCell(r,c){
+  const cand=[];
+  for(const clue of cluesH) if(clue.positions.some(([rr,cc])=>rr===r && cc===c)) cand.push(clue);
+  for(const clue of cluesV) if(clue.positions.some(([rr,cc])=>rr===r && cc===c)) cand.push(clue);
+  if(!cand.length) return;
+  let chosen=cand.find(x=>x.dir===current.dir) || cand[0];
+  activateClue(chosen.dir, chosen.id);
+  cellAt(r,c).input.focus();
+}
+
+/* =======================
+   Input + navigation
+   ======================= */
+function nextPos(r,c){
+  const pos=current.positions;
+  const i=pos.findIndex(([rr,cc])=>rr===r && cc===c);
+  if(i<0||i+1>=pos.length) return null;
+  return pos[i+1];
+}
+function prevPos(r,c){
+  const pos=current.positions;
+  const i=pos.findIndex(([rr,cc])=>rr===r && cc===c);
+  if(i<=0) return null;
+  return pos[i-1];
+}
+
+function onKeyDown(e,r,c){
+  const cell=cellAt(r,c);
+  if(!cell||cell.block) return;
+
+  if(e.key==='ArrowRight'){ e.preventDefault();
+    if(current.dir==='H'){ const n=nextPos(r,c); if(n) cellAt(n[0],n[1]).input.focus(); }
+    else if(inBounds(r,c+1)&&!BLOCKS[r][c+1]) cellAt(r,c+1).input.focus();
+    return;
+  }
+  if(e.key==='ArrowLeft'){ e.preventDefault();
+    if(current.dir==='H'){ const p=prevPos(r,c); if(p) cellAt(p[0],p[1]).input.focus(); }
+    else if(inBounds(r,c-1)&&!BLOCKS[r][c-1]) cellAt(r,c-1).input.focus();
+    return;
+  }
+  if(e.key==='ArrowDown'){ e.preventDefault();
+    if(current.dir==='V'){ const n=nextPos(r,c); if(n) cellAt(n[0],n[1]).input.focus(); }
+    else if(inBounds(r+1,c)&&!BLOCKS[r+1][c]) cellAt(r+1,c).input.focus();
+    return;
+  }
+  if(e.key==='ArrowUp'){ e.preventDefault();
+    if(current.dir==='V'){ const p=prevPos(r,c); if(p) cellAt(p[0],p[1]).input.focus(); }
+    else if(inBounds(r-1,c)&&!BLOCKS[r-1][c]) cellAt(r-1,c).input.focus();
+    return;
+  }
+
+  if(e.key==='Backspace'){
+    if(cell.input.value===''){
+      const p=prevPos(r,c);
+      if(p){ const prev=cellAt(p[0],p[1]); prev.input.focus(); prev.input.value=''; }
+    } else cell.input.value='';
+    return;
+  }
+
+  if(e.key==='Enter'){ e.preventDefault(); checkOneClue(true); return; }
+}
+
+function onInput(e,r,c){
+  const theme=document.getElementById('themeSel').value;
+  const cell=cellAt(r,c);
+  if(!cell||cell.block) return;
+
+  let v=cell.input.value;
+  if(v.length>1) v=v[v.length-1];
+  v=allowedChar(v,theme);
+  cell.input.value=v;
+
+  const auto=document.getElementById('autoAdvance').checked;
+  if(auto && v){
+    if(!current.clueId) activateFromCell(r,c);
+    const n=nextPos(r,c);
+    if(n) cellAt(n[0],n[1]).input.focus();
+  }
+
+  cell.el.classList.remove('good','bad');
+  highlightWord();
+}
+
+/* =======================
+   Checking
+   ======================= */
+function checkOneClue(mark){
+  if(!current.clueId) return;
+  const clue=getClue(current.dir,current.clueId);
+  if(!clue) return;
+
+  let ok=true;
+  for(const [r,c] of clue.positions){
+    const got=cellAt(r,c).input.value||'';
+    const exp=answers[r][c];
+    if(got!==exp) ok=false;
+  }
+
+  if(mark && document.getElementById('liveMark').checked){
+    for(const [r,c] of clue.positions){
+      const cell=cellAt(r,c);
+      const got=cell.input.value||'';
+      const exp=answers[r][c];
+      cell.el.classList.remove('good','bad');
+      if(got==='') continue;
+      cell.el.classList.add(got===exp?'good':'bad');
+    }
+  }
+
+  if(ok){ setScore(okCount+1); setStatus('state_ok'); }
+  else setStatus('state_err_clue');
+
+  if(isAllCorrect()) setStatus('state_done');
+}
+
+function checkAll(){
+  let anyError=false, filled=0, total=0;
+  for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){
+    if(BLOCKS[r][c]) continue;
+    total++;
+    const cell=cellAt(r,c);
+    const got=cell.input.value||'';
+    const exp=answers[r][c];
+    if(got!=='') filled++;
+    if(got!=='' && got!==exp) anyError=true;
+
+    if(document.getElementById('liveMark').checked){
+      cell.el.classList.remove('good','bad');
+      if(got==='') continue;
+      cell.el.classList.add(got===exp?'good':'bad');
+    }
+  }
+  if(!anyError && filled===total) setStatus('state_done');
+  else if(anyError) setStatus('state_err');
+  else setStatus('state_missing');
+}
+
+function isAllCorrect(){
+  for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){
+    if(BLOCKS[r][c]) continue;
+    const got=cellAt(r,c).input.value||'';
+    if(got!==answers[r][c]) return false;
+  }
+  return true;
+}
+
+function reveal(){
+  for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){
+    if(BLOCKS[r][c]) continue;
+    const cell=cellAt(r,c);
+    cell.input.value=answers[r][c];
+    cell.el.classList.remove('bad');
+    cell.el.classList.add('good');
+  }
+  setStatus('state_shown');
+}
+
+function clearInputs(){
+  for(const cell of cells){
+    if(cell.block) continue;
+    cell.input.value='';
+    cell.el.classList.remove('good','bad');
+  }
+}
+
+/* =======================
+   Size / new pattern
+   ======================= */
+function applySizeAndPattern(){
+  SIZE = Number(document.getElementById('sizeSel').value);
+  BLOCKS = pickRandomPattern(SIZE);
+  buildGrid();
+  generatePuzzle();
+}
+
+/* =======================
+   Wire UI
+   ======================= */
+document.getElementById('new').addEventListener('click', () => applySizeAndPattern());
+document.getElementById('checkClue').addEventListener('click', () => checkOneClue(true));
+document.getElementById('checkAll').addEventListener('click', () => checkAll());
+document.getElementById('reveal').addEventListener('click', () => reveal());
+
+document.getElementById('sizeSel').addEventListener('change', () => applySizeAndPattern());
+document.getElementById('themeSel').addEventListener('change', () => generatePuzzle());
+document.getElementById('levelSel').addEventListener('change', () => generatePuzzle());
+
+document.getElementById('langSel').addEventListener('change', () => {
+  LANG = document.getElementById('langSel').value || 'eu';
+  applyLanguageUI();
+  // Regenerar para actualizar textos de pistas en el idioma nuevo
+  applySizeAndPattern();
+});
+
+/* =======================
+   Init (default EU)
+   ======================= */
+LANG = 'eu';
+applyLanguageUI();
+document.getElementById('langSel').value = 'eu';
+document.getElementById('sizeSel').value = '9';
+applySizeAndPattern();
+</script>
+</body>
+</html>

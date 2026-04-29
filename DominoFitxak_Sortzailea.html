@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="eu">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Domino-fitxen sortzailea / Generador de fichas de dominó</title>
+<style>
+  :root{
+    --ink:#1f2937;
+    --muted:#6b7280;
+    --line:#111827;
+    --soft:#f3f4f6;
+    --accent:#0f5f9c;
+    --accent-2:#2563eb;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:Arial, Helvetica, sans-serif;
+    color:var(--ink);
+    background:#f8fafc;
+  }
+  header{
+    padding:18px 28px;
+    background:white;
+    border-bottom:1px solid #e5e7eb;
+  }
+  h1{margin:0 0 4px;font-size:24px}
+  p{margin:0;color:var(--muted)}
+  main{padding:18px 28px;max-width:1200px;margin:auto}
+  .panel{
+    background:white;
+    border:1px solid #e5e7eb;
+    border-radius:14px;
+    padding:16px;
+    margin-bottom:18px;
+    box-shadow:0 4px 12px rgba(0,0,0,.04);
+  }
+  .controls{
+    display:grid;
+    grid-template-columns:140px repeat(4,minmax(140px,1fr));
+    gap:14px;
+    align-items:end;
+  }
+  label{font-size:13px;font-weight:700;display:block;margin-bottom:6px}
+  select,input{
+    width:100%;
+    padding:9px 10px;
+    border:1px solid #d1d5db;
+    border-radius:8px;
+    font-size:14px;
+    background:white;
+  }
+  button{
+    border:0;
+    border-radius:9px;
+    padding:10px 14px;
+    font-weight:700;
+    cursor:pointer;
+    background:var(--accent-2);
+    color:white;
+  }
+  button.secondary{background:#374151}
+  button.light{background:#e5e7eb;color:#111827}
+  .lang-toggle{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    padding:4px;
+    border:1px solid #d7dee8;
+    border-radius:999px;
+    background:#ffffff;
+    box-shadow:0 1px 4px rgba(15,23,42,.08);
+    width:max-content;
+  }
+  .lang-btn{
+    border:0;
+    background:transparent;
+    color:#0f172a;
+    font-weight:800;
+    font-size:13px;
+    padding:8px 11px;
+    border-radius:999px;
+    cursor:pointer;
+    min-width:40px;
+  }
+  .lang-btn.active{
+    background:var(--accent);
+    color:white;
+  }
+  .hint{font-size:13px;color:var(--muted);margin-top:12px;line-height:1.45}
+  .sheet-title{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:12px;
+    margin:18px 0 12px;
+  }
+  .sheet-title h2{margin:0;font-size:22px}
+  .meta{color:var(--muted);font-size:13px}
+  .domino-grid{
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:12px;
+  }
+  .tile{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    min-height:82px;
+    border:2px solid var(--line);
+    background:white;
+    break-inside:avoid;
+    page-break-inside:avoid;
+  }
+  .half{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    font-size:30px;
+    font-weight:700;
+    padding:10px;
+  }
+  .half:first-child{border-right:2px solid var(--line)}
+  .frac{
+    display:inline-flex;
+    flex-direction:column;
+    align-items:center;
+    line-height:1;
+  }
+  .frac .bar{
+    width:100%;
+    border-top:2px solid currentColor;
+    margin:3px 0;
+  }
+  .solutions{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:8px 18px;
+    font-size:14px;
+  }
+  .solution-item{
+    border-bottom:1px dotted #cbd5e1;
+    padding:5px 0;
+  }
+  .print-only{display:none}
+  @media (max-width:900px){
+    .controls{grid-template-columns:repeat(2,minmax(140px,1fr))}
+  }
+  @media print{
+    body{background:white}
+    header,.controls-panel,.no-print{display:none !important}
+    main{padding:0;max-width:none}
+    .panel{box-shadow:none;border:0;padding:0;margin:0}
+    .print-only{display:block}
+    .sheet-title{margin:0 0 10px}
+    .domino-grid{grid-template-columns:repeat(2, 1fr);gap:10px}
+    .tile{min-height:76px}
+    .half{font-size:28px}
+    .page-break{break-before:page;page-break-before:always}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="appTitle"></h1>
+  <p id="appSubtitle"></p>
+</header>
+
+<main>
+  <section class="panel controls-panel">
+    <div class="controls">
+      <div>
+        <label id="labelLang"></label>
+        <div class="lang-toggle" role="group" aria-label="Language selector">
+          <button type="button" class="lang-btn active" id="btnEU" onclick="setLanguage('eu')">EU</button>
+          <button type="button" class="lang-btn" id="btnES" onclick="setLanguage('es')">ES</button>
+        </div>
+      </div>
+      <div>
+        <label for="level" id="labelLevel"></label>
+        <select id="level"></select>
+      </div>
+      <div>
+        <label for="count" id="labelCount"></label>
+        <input id="count" type="number" min="6" max="36" value="28" />
+      </div>
+      <div>
+        <label for="mode" id="labelMode"></label>
+        <select id="mode"></select>
+      </div>
+      <div>
+        <label for="solutionsOn" id="labelSolutions"></label>
+        <select id="solutionsOn"></select>
+      </div>
+    </div>
+
+    <div class="hint" id="hintText"></div>
+
+    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+      <button onclick="generate()" id="btnGenerate"></button>
+      <button class="secondary" onclick="window.print()" id="btnPrint"></button>
+      <button class="light" onclick="generate()" id="btnNewCombination"></button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="sheet-title">
+      <div>
+        <h2 id="sheetHeading"></h2>
+        <div class="meta" id="meta"></div>
+      </div>
+      <div class="meta no-print" id="cutHint"></div>
+    </div>
+    <div id="tiles" class="domino-grid"></div>
+  </section>
+
+  <section id="solutionsPanel" class="panel page-break">
+    <div class="sheet-title">
+      <div>
+        <h2 id="solutionsHeading"></h2>
+        <div class="meta" id="solutionsMeta"></div>
+      </div>
+    </div>
+    <div id="solutions" class="solutions"></div>
+  </section>
+</main>
+
+<script>
+const i18n = {
+  eu: {
+    appTitle: "Domino-fitxen sortzaile automatikoa",
+    appSubtitle: "Zatikiak, zenbaki hamartarrak eta ehunekoak DBHko lehen ziklorako",
+    labelLang: "Hizkuntza",
+    labelLevel: "Maila",
+    labelCount: "Fitxa kopurua",
+    labelMode: "Modua",
+    labelSolutions: "Ebazpenak",
+    btnGenerate: "Sortu",
+    btnPrint: "Inprimatu / PDF gisa gorde",
+    btnNewCombination: "Konbinazio berria",
+    sheetHeading: "Sortutako fitxak",
+    cutHint: "Moztu fitxa bakoitza kanpoko ertzetik.",
+    solutionsHeading: "Ebazpen-orria",
+    solutionsMeta: "Fitxak baliozkotzeko erabilitako oinarrizko baliokidetasunak.",
+    levels: {
+      inicial: "Hasierakoa",
+      intermedio: "Ertaina",
+      avanzado: "Aurreratua"
+    },
+    modes: {
+      closed: "Domino itxia",
+      open: "Ausazko praktika"
+    },
+    solutions: {
+      yes: "Ebazpen-orria sartu",
+      no: "Fitxak bakarrik"
+    },
+    hintText: "<strong>Domino itxia:</strong> fitxa bakoitza kate zirkular baten parte gisa sortzen da; beraz, beti dago ebazpen oso bat.<br><strong>Ausazko praktika:</strong> baliokideak diren adierazpenak nahastuta sortzen ditu, errefortzurako edo lan azkarrerako.",
+    meta: (level, count, mode) => `Maila: ${level} · Fitxak: ${count} · Modua: ${mode}`
+  },
+  es: {
+    appTitle: "Generador automático de fichas de dominó",
+    appSubtitle: "Fracciones, decimales y porcentajes para 1.º ciclo de ESO",
+    labelLang: "Idioma",
+    labelLevel: "Nivel",
+    labelCount: "Número de fichas",
+    labelMode: "Modo",
+    labelSolutions: "Soluciones",
+    btnGenerate: "Generar",
+    btnPrint: "Imprimir / guardar como PDF",
+    btnNewCombination: "Nueva combinación",
+    sheetHeading: "Fichas generadas",
+    cutHint: "Recorta por el borde exterior de cada ficha.",
+    solutionsHeading: "Hoja de soluciones",
+    solutionsMeta: "Equivalencias base utilizadas para validar las fichas.",
+    levels: {
+      inicial: "Inicial",
+      intermedio: "Intermedio",
+      avanzado: "Avanzado"
+    },
+    modes: {
+      closed: "Dominó cerrado",
+      open: "Práctica aleatoria"
+    },
+    solutions: {
+      yes: "Incluir hoja de soluciones",
+      no: "Solo fichas"
+    },
+    hintText: "<strong>Dominó cerrado:</strong> cada ficha se genera como parte de una cadena circular, de modo que siempre existe una solución completa.<br><strong>Práctica aleatoria:</strong> genera asociaciones equivalentes mezcladas, útil para trabajo rápido o refuerzo.",
+    meta: (level, count, mode) => `Nivel: ${level} · Fichas: ${count} · Modo: ${mode}`
+  }
+};
+
+let currentLang = "eu";
+
+const pools = {
+  inicial: [
+    {frac:"1/2", dec:"0,5", pct:"50%"},
+    {frac:"1/4", dec:"0,25", pct:"25%"},
+    {frac:"3/4", dec:"0,75", pct:"75%"},
+    {frac:"1/10", dec:"0,1", pct:"10%"},
+    {frac:"3/10", dec:"0,3", pct:"30%"},
+    {frac:"7/10", dec:"0,7", pct:"70%"},
+    {frac:"1/5", dec:"0,2", pct:"20%"},
+    {frac:"4/5", dec:"0,8", pct:"80%"}
+  ],
+  intermedio: [
+    {frac:"1/5", dec:"0,2", pct:"20%"},
+    {frac:"2/5", dec:"0,4", pct:"40%"},
+    {frac:"3/5", dec:"0,6", pct:"60%"},
+    {frac:"4/5", dec:"0,8", pct:"80%"},
+    {frac:"1/20", dec:"0,05", pct:"5%"},
+    {frac:"3/20", dec:"0,15", pct:"15%"},
+    {frac:"7/20", dec:"0,35", pct:"35%"},
+    {frac:"9/20", dec:"0,45", pct:"45%"},
+    {frac:"11/20", dec:"0,55", pct:"55%"},
+    {frac:"13/20", dec:"0,65", pct:"65%"}
+  ],
+  avanzado: [
+    {frac:"1/8", dec:"0,125", pct:"12,5%"},
+    {frac:"3/8", dec:"0,375", pct:"37,5%"},
+    {frac:"5/8", dec:"0,625", pct:"62,5%"},
+    {frac:"7/8", dec:"0,875", pct:"87,5%"},
+    {frac:"1/3", dec:"0,333…", pct:"33,3%"},
+    {frac:"2/3", dec:"0,666…", pct:"66,6%"},
+    {frac:"1/6", dec:"0,166…", pct:"16,6%"},
+    {frac:"5/6", dec:"0,833…", pct:"83,3%"},
+    {frac:"1/12", dec:"0,083…", pct:"8,3%"},
+    {frac:"5/12", dec:"0,416…", pct:"41,6%"}
+  ]
+};
+
+function setLanguage(lang){
+  currentLang = lang;
+  document.documentElement.lang = lang;
+  document.getElementById("btnEU").classList.toggle("active", lang === "eu");
+  document.getElementById("btnES").classList.toggle("active", lang === "es");
+  populateTexts();
+  populateSelects();
+  generate();
+}
+
+function populateTexts(){
+  const t = i18n[currentLang];
+  document.getElementById("appTitle").textContent = t.appTitle;
+  document.getElementById("appSubtitle").textContent = t.appSubtitle;
+  document.getElementById("labelLang").textContent = t.labelLang;
+  document.getElementById("labelLevel").textContent = t.labelLevel;
+  document.getElementById("labelCount").textContent = t.labelCount;
+  document.getElementById("labelMode").textContent = t.labelMode;
+  document.getElementById("labelSolutions").textContent = t.labelSolutions;
+  document.getElementById("btnGenerate").textContent = t.btnGenerate;
+  document.getElementById("btnPrint").textContent = t.btnPrint;
+  document.getElementById("btnNewCombination").textContent = t.btnNewCombination;
+  document.getElementById("sheetHeading").textContent = t.sheetHeading;
+  document.getElementById("cutHint").textContent = t.cutHint;
+  document.getElementById("solutionsHeading").textContent = t.solutionsHeading;
+  document.getElementById("solutionsMeta").textContent = t.solutionsMeta;
+  document.getElementById("hintText").innerHTML = t.hintText;
+}
+
+function populateSelects(){
+  const t = i18n[currentLang];
+
+  const levelPrev = document.getElementById("level").value || "inicial";
+  const modePrev = document.getElementById("mode").value || "closed";
+  const solPrev = document.getElementById("solutionsOn").value || "yes";
+
+  const level = document.getElementById("level");
+  level.innerHTML = "";
+  Object.entries(t.levels).forEach(([value,label])=>{
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = label;
+    level.appendChild(opt);
+  });
+  level.value = levelPrev in t.levels ? levelPrev : "inicial";
+
+  const mode = document.getElementById("mode");
+  mode.innerHTML = "";
+  Object.entries(t.modes).forEach(([value,label])=>{
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = label;
+    mode.appendChild(opt);
+  });
+  mode.value = modePrev in t.modes ? modePrev : "closed";
+
+  const sol = document.getElementById("solutionsOn");
+  sol.innerHTML = "";
+  Object.entries(t.solutions).forEach(([value,label])=>{
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = label;
+    sol.appendChild(opt);
+  });
+  sol.value = solPrev in t.solutions ? solPrev : "yes";
+}
+
+function shuffle(arr){
+  const a = [...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function pickRep(item){
+  const reps = [item.frac, item.dec, item.pct];
+  return reps[Math.floor(Math.random()*reps.length)];
+}
+
+function formatValue(v){
+  if(/^\d+\/\d+$/.test(v)){
+    const [n,d]=v.split("/");
+    return `<span class="frac"><span>${n}</span><span class="bar"></span><span>${d}</span></span>`;
+  }
+  return v;
+}
+
+function getPool(){
+  const level = document.getElementById("level").value;
+  return pools[level] || pools.inicial;
+}
+
+function buildClosed(pool, count){
+  let values = [];
+  while(values.length < count){
+    values = values.concat(shuffle(pool));
+  }
+  values = values.slice(0,count);
+  const tiles = [];
+  for(let i=0;i<count;i++){
+    const left = pickRep(values[i]);
+    const right = pickRep(values[(i+1)%count]);
+    tiles.push({left,right, a:values[i], b:values[(i+1)%count]});
+  }
+  return shuffle(tiles);
+}
+
+function buildOpen(pool, count){
+  const tiles = [];
+  for(let i=0;i<count;i++){
+    const a = pool[Math.floor(Math.random()*pool.length)];
+    const b = pool[Math.floor(Math.random()*pool.length)];
+    tiles.push({left:pickRep(a), right:pickRep(b), a, b});
+  }
+  return tiles;
+}
+
+function generate(){
+  const t = i18n[currentLang];
+  const count = Math.max(6, Math.min(36, parseInt(document.getElementById("count").value || "28")));
+  document.getElementById("count").value = count;
+
+  const level = document.getElementById("level").value;
+  const mode = document.getElementById("mode").value;
+  const pool = getPool();
+  const tiles = mode === "closed" ? buildClosed(pool, count) : buildOpen(pool, count);
+
+  document.getElementById("sheetHeading").innerText = t.sheetHeading;
+  document.getElementById("meta").innerText =
+    t.meta(t.levels[level], count, t.modes[mode]);
+
+  const container = document.getElementById("tiles");
+  container.innerHTML = "";
+  tiles.forEach(tile=>{
+    const div = document.createElement("div");
+    div.className = "tile";
+    div.innerHTML = `<div class="half">${formatValue(tile.left)}</div><div class="half">${formatValue(tile.right)}</div>`;
+    container.appendChild(div);
+  });
+
+  const solPanel = document.getElementById("solutionsPanel");
+  solPanel.style.display = document.getElementById("solutionsOn").value === "yes" ? "block" : "none";
+
+  const used = [];
+  pool.forEach(x=>{
+    if(tiles.some(tile => tile.a===x || tile.b===x)){
+      used.push(x);
+    }
+  });
+
+  const sol = document.getElementById("solutions");
+  sol.innerHTML = "";
+  used.forEach(x=>{
+    const d = document.createElement("div");
+    d.className="solution-item";
+    d.innerHTML = `${formatValue(x.frac)} = ${x.dec} = ${x.pct}`;
+    sol.appendChild(d);
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  populateTexts();
+  populateSelects();
+  generate();
+
+  document.getElementById("level").addEventListener("change", generate);
+  document.getElementById("count").addEventListener("input", generate);
+  document.getElementById("mode").addEventListener("change", generate);
+  document.getElementById("solutionsOn").addEventListener("change", generate);
+});
+</script>
+</body>
+</html>

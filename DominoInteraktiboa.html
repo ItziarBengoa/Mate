@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="eu">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Domino interaktiboa / Dominó interactivo</title>
+<style>
+:root{--bg:#f6f7fb;--panel:#ffffff;--ink:#1f2937;--muted:#6b7280;--line:#111827;--soft:#e5e7eb;--accent:#2563eb;--ok:#15803d;--bad:#b91c1c;--warn:#b45309}*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink)}header{background:var(--panel);border-bottom:1px solid var(--soft);padding:18px 24px;position:sticky;top:0;z-index:5}h1{margin:0;font-size:21px}header p{margin:2px 0 0;color:var(--muted);font-size:13px}main{max-width:1300px;margin:auto;padding:20px}.panel{background:var(--panel);border:1px solid var(--soft);border-radius:14px;padding:16px;margin-bottom:16px;box-shadow:0 4px 14px rgba(0,0,0,.04)}.controls{display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:12px;align-items:end}label{display:block;font-size:12px;font-weight:700;margin-bottom:3px}select,input{width:100%;padding:9px;border:1px solid #d1d5db;border-radius:8px;background:white;font-size:14px}.lang-toggle{display:inline-flex;align-items:center;width:84px;height:42px;border:1px solid #cbd5e1;border-radius:999px;padding:3px;background:#fff;gap:2px;box-shadow:0 1px 2px rgba(15,23,42,.08)}.lang-option{width:36px;height:34px;border:0;border-radius:999px;padding:0;background:transparent;color:#075985;font-size:12px;font-weight:800;line-height:34px;text-align:center;cursor:pointer;transition:.14s background,.14s color,.14s box-shadow}.lang-option.active{background:#075a96;color:white;box-shadow:0 2px 6px rgba(7,90,150,.28)}button{border:0;border-radius:9px;padding:10px 13px;background:var(--accent);color:white;font-weight:700;cursor:pointer}button.secondary{background:#374151}button.light{background:#e5e7eb;color:#111827}button.good{background:var(--ok)}button.bad{background:var(--bad)}.status{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.stat{border:1px solid var(--soft);border-radius:12px;padding:12px;background:#fafafa}.stat b{
+  font-size:19px;
+  display:inline-block;
+  margin:0 0 0 auto;
+  line-height:1;
+  flex:0 0 auto;
+  padding-left:12px;
+}.stat span{
+  font-size:11px;
+  color:var(--muted);
+  font-weight:700;
+  text-transform:uppercase;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  min-width:0;
+}.notice{padding:12px;border-radius:10px;background:#eff6ff;border:1px solid #bfdbfe;margin-top:12px;line-height:1.45}.notice.ok{background:#ecfdf5;border-color:#bbf7d0}.notice.bad{background:#fef2f2;border-color:#fecaca}.notice.warn{background:#fffbeb;border-color:#fde68a}.flex{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.board-wrap{overflow-x:auto;padding-bottom:10px}.board{display:flex;align-items:center;gap:7px;min-height:125px;padding:14px;border:1px solid #15803d;border-radius:14px;background:#1f9d49;box-shadow:inset 0 0 0 1px rgba(255,255,255,.16),inset 0 0 18px rgba(0,0,0,.10)}.dropzone{min-width:108px;min-height:82px;border:2px dashed rgba(255,255,255,.75);border-radius:12px;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;background:rgba(255,255,255,.10);text-align:center;padding:8px}.hand{display:grid;grid-template-columns:repeat(auto-fill,minmax(171px,1fr));gap:11px}.tile{display:grid;grid-template-columns:1fr 1fr;min-height:71px;border:2px solid var(--line);background:white;border-radius:8px;overflow:hidden;cursor:pointer;user-select:none;transition:.12s transform,.12s box-shadow}.tile:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,.08)}.tile.selected{outline:4px solid #93c5fd}.tile.on-board{cursor:default;min-width:162px;max-width:190px;flex:0 0 171px}.tile.on-board:hover{transform:none;box-shadow:none}.half{display:flex;align-items:center;justify-content:center;text-align:center;font-size:22px;font-weight:800;padding:6px;min-width:0}.half:first-child{border-right:2px solid var(--line)}.frac{display:inline-flex;flex-direction:column;align-items:center;line-height:1}.frac .bar{width:100%;border-top:2px solid currentColor;margin:2px 0}.small{font-size:13px;color:var(--muted);line-height:1.45}.solution-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}.solution{padding:8px;border-bottom:1px dotted #cbd5e1}.hidden{display:none!important}.log{max-height:170px;overflow:auto;font-size:13px;background:#f8fafc;border:1px solid var(--soft);border-radius:10px;padding:10px}.log div{padding:4px 0;border-bottom:1px solid #edf2f7}
+
+.game-layout{
+  display:grid;
+  grid-template-columns:minmax(0,1.55fr) minmax(360px,.85fr);
+  gap:12px;
+  align-items:stretch;
+}
+.game-layout .panel{
+  margin-bottom:10px;
+}
+.board-panel,
+.hand-panel{
+  display:flex;
+  flex-direction:column;
+  min-height:520px;
+}
+.section-head{
+  flex:0 0 auto;
+}
+.board-actions,
+.hand-actions{
+  gap:8px;
+}
+.board-wrap{
+  flex:1 1 auto;
+  min-height:0;
+}
+.board{
+  height:100%;
+  min-height:460px;
+  align-content:flex-start;
+  align-items:flex-start;
+  flex-wrap:wrap;
+  overflow:auto;
+}
+.hand-panel .small{
+  margin:6px 0 10px;
+}
+.hand{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  padding-right:4px;
+  align-content:start;
+  grid-template-columns:repeat(auto-fill,minmax(155px,1fr));
+}
+@media (max-width:1050px){
+  .game-layout{
+    grid-template-columns:1fr;
+  }
+  .board-panel,
+  .hand-panel{
+    min-height:auto;
+  }
+  .board{
+    min-height:280px;
+  }
+  .hand{
+    max-height:none;
+    overflow:visible;
+  }
+}
+
+
+/* Secuencia de dominó en recorrido tipo serpiente */
+.board{
+  position:relative;
+  display:block;
+  overflow:auto;
+}
+.board .tile.on-board{
+  position:absolute;
+  margin:0;
+}
+.tile.vertical{
+  grid-template-columns:1fr;
+  grid-template-rows:1fr 1fr;
+}
+.tile.vertical .half:first-child{
+  border-right:0;
+  border-bottom:2px solid var(--line);
+}
+.tile.vertical .half{
+  min-height:0;
+}
+
+
+/* Corrección de dimensiones para fichas verticales del recorrido */
+.board .tile.on-board.vertical{
+  min-width:71px !important;
+  max-width:71px !important;
+  width:71px !important;
+  height:171px !important;
+  flex:0 0 71px !important;
+}
+.board .tile.on-board:not(.vertical){
+  min-width:171px !important;
+  max-width:171px !important;
+  width:171px !important;
+  height:71px !important;
+  flex:0 0 171px !important;
+}
+
+@media print{header,.controls-panel,.no-print{display:none!important}main{max-width:none;padding:0}.panel{box-shadow:none;border:0;margin:0 0 12px;padding:0}body{background:white}}@media(max-width:1000px){.controls{grid-template-columns:repeat(2,1fr)}.status{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<header><h1 id="appTitle"></h1><p id="appSubtitle"></p></header>
+<main>
+<section class="panel controls-panel"><div class="controls">
+<div><label id="labelLang"></label><div class="lang-toggle" role="group" aria-label="Language selector"><button type="button" class="lang-option active" id="langEu" onclick="setLanguage('eu')">EU</button><button type="button" class="lang-option" id="langEs" onclick="setLanguage('es')">ES</button></div></div>
+<div><label for="level" id="labelLevel"></label><select id="level"></select></div>
+<div><label for="count" id="labelCount"></label><input id="count" type="number" min="8" max="28" value="28" /></div>
+<div><label for="helpMode" id="labelHelpMode"></label><select id="helpMode"></select></div>
+<div><button onclick="newGame()" id="btnNewGame"></button></div>
+<div><button class="secondary" onclick="window.print()" id="btnPrint"></button></div>
+</div><div class="notice" id="instructions"></div></section>
+<section class="panel"><div class="status"><div class="stat"><span id="statRemainingLabel"></span><b id="remaining">0</b></div><div class="stat"><span id="statHitsLabel"></span><b id="hits">0</b></div><div class="stat"><span id="statErrorsLabel"></span><b id="errors">0</b></div><div class="stat"><span id="statHintsLabel"></span><b id="hints">0</b></div><div class="stat"><span id="statScoreLabel"></span><b id="score">0</b></div></div><div id="message" class="notice warn"></div></section>
+<div class="game-layout">
+<section class="panel board-panel"><div class="flex section-head" style="justify-content:space-between"><h2 style="margin:0;font-size:20px" id="boardTitle"></h2><div class="flex no-print board-actions"><button class="light" onclick="placeSelected('left')" id="placeLeft"></button><button class="light" onclick="rotateSelected()" id="rotateBtn"></button><button class="light" onclick="placeSelected('right')" id="placeRight"></button></div></div><div class="board-wrap"><div class="board" id="board"></div></div></section>
+<section class="panel hand-panel"><div class="flex section-head" style="justify-content:space-between"><h2 style="margin:0;font-size:20px" id="handTitle"></h2><div class="flex no-print hand-actions"><button class="good" onclick="giveHint()" id="hintBtn"></button><button class="bad" onclick="finishGame(false)" id="finishBtn"></button></div></div><p class="small" id="handHelp"></p><div id="hand" class="hand"></div></section>
+</div>
+<section class="panel"><h2 style="margin-top:0;font-size:20px" id="logTitle"></h2><div id="log" class="log"></div></section>
+<section class="panel hidden" id="finalPanel"><h2 style="margin-top:0;font-size:20px" id="finalTitle"></h2><div id="finalSummary"></div><h3 id="equivalencesTitle"></h3><div id="solutions" class="solution-grid"></div></section>
+</main>
+<script>
+const i18n={eu:{appTitle:"Domino interaktiboa: zatikiak, hamartarrak eta ehunekoak",appSubtitle:"Lotu adierazpen baliokideak eta arrazoitu matematikoki konexioak.",labelLang:"Hizkuntza",labelLevel:"Maila",labelCount:"Fitxak",labelHelpMode:"Laguntzak",labelSeed:"Aukerako hazia",seedPlaceholder:"hutsik = ausazkoa",btnNewGame:"Partida berria",btnPrint:"Laburpena inprimatu",instructions:"<strong>Nola jokatu:</strong> aukeratu eskuko fitxa bat eta jarri taularen ezkerrean edo eskuinean. Konexioa onartuko da soilik muturrek kantitate bera adierazten badute. Fitxa jarri aurretik biratu dezakezu.",levels:{basico:"Hasierakoa",intermedio:"Ertaina",avanzado:"Aurreratua"},helpModes:{normal:"Arruntak",limited:"Mugatuak",none:"Laguntzarik gabe"},statRemaining:"Geratzen diren fitxak",statHits:"Asmatutakoak",statErrors:"Akatsak",statHints:"Erabilitako laguntzak",statScore:"Puntuazioa",initialMessage:"Sakatu “Partida berria” hasteko.",boardTitle:"Taula",emptyBoard:"Taula hutsik",placeLeft:"Ezkerrean jarri",rotateBtn:"Fitxa biratu",placeRight:"Eskuinean jarri",handTitle:"Eskuko fitxak",hintBtn:"Laguntza eskatu",finishBtn:"Amaitu",handHelp:"Aukeratu fitxa bat. Ez badu loturarik, ez da jarriko eta akatsa erregistratuko da.",logTitle:"Partidaren erregistroa",finalTitle:"Amaierako laburpena",equivalencesTitle:"Landutako baliokidetasunak",gameGenerated:"Partida sortu da. Jarri lehen fitxa taulan.",newGameLog:"Partida berria hasi da.",selectFirst:"Lehenik, aukeratu eskuko fitxa bat.",correct:"Konexioa zuzena da. Fitxa jarri da.",placedLeft:"Asmatua: fitxa ezkerrean jarri da.",placedRight:"Asmatua: fitxa eskuinean jarri da.",incorrect:(needed,tried)=>`Konexioa okerra da: lotu nahi duzun muturra ez da baliokidea. ${needed} behar duzu, baina ${tried} erabiltzen ari zara.`,errorLog:"Akatsa: konexioa ez da baliokidea.",startAny:(a,b)=>`Edozein fitxarekin has zaitezke. Adibidez, ${a} edo ${b} duen fitxa batekin.`,hintSearch:(left,right)=>`Bilatu ${left} edo ${right} balioarekin lotutako fitxa bat. Agian fitxa biratu beharko duzu jarri aurretik.`,hintNone:"Ez dut berehalako konexiorik aurkitzen. Aztertu taulan fitxaren bat gaizki jarrita dagoen.",noHints:"Ez dago laguntza gehiagorik.",alreadyComplete:"Partida osatuta dago.",hintUsedLog:"Laguntza erabili da.",completed:"Partida osatu da.",finished:"Partida amaitu da.",finalScore:score=>`Azken puntuazioa: ${score}.`,summaryPlaced:"Jarritako fitxak",summaryHits:"Asmatutakoak",summaryErrors:"Akatsak",summaryHints:"Laguntzak",summaryScore:"Azken puntuazioa",evidenceNote:"Partida ebidentzia ebaluagarri bihurtzeko, eskatu ikasleei taulako hiru konexio zuzen idatziz azaltzeko."},es:{appTitle:"Dominó interactivo: fracciones, decimales y porcentajes",appSubtitle:"Relaciona expresiones equivalentes y justifica matemáticamente las conexiones.",labelLang:"Idioma",labelLevel:"Nivel",labelCount:"Fichas",labelHelpMode:"Ayudas",labelSeed:"Semilla opcional",seedPlaceholder:"vacío = aleatoria",btnNewGame:"Nueva partida",btnPrint:"Imprimir resumen",instructions:"<strong>Cómo se juega:</strong> selecciona una ficha de tu mano y colócala a la izquierda o a la derecha del tablero. La conexión solo se acepta si los extremos representan la misma cantidad. Puedes girar la ficha antes de colocarla.",levels:{basico:"Inicial",intermedio:"Intermedio",avanzado:"Avanzado"},helpModes:{normal:"Normales",limited:"Limitadas",none:"Sin ayudas"},statRemaining:"Fichas restantes",statHits:"Aciertos",statErrors:"Errores",statHints:"Ayudas usadas",statScore:"Puntuación",initialMessage:"Pulsa “Nueva partida” para empezar.",boardTitle:"Tablero",emptyBoard:"Tablero vacío",placeLeft:"Colocar a la izquierda",rotateBtn:"Girar ficha",placeRight:"Colocar a la derecha",handTitle:"Fichas en mano",hintBtn:"Pedir ayuda",finishBtn:"Finalizar",handHelp:"Selecciona una ficha. Si no encaja, no se coloca y queda registrado el error.",logTitle:"Registro de partida",finalTitle:"Resumen final",equivalencesTitle:"Equivalencias trabajadas",gameGenerated:"Partida generada. Coloca una primera ficha en el tablero.",newGameLog:"Nueva partida iniciada.",selectFirst:"Selecciona primero una ficha de tu mano.",correct:"Conexión correcta. La ficha se ha colocado.",placedLeft:"Acierto: ficha colocada en la izquierda.",placedRight:"Acierto: ficha colocada en la derecha.",incorrect:(needed,tried)=>`Conexión incorrecta: el extremo que intentas unir no es equivalente. Necesitas ${needed}, pero estás usando ${tried}.`,errorLog:"Error: conexión no equivalente.",startAny:(a,b)=>`Puedes empezar con cualquier ficha. Por ejemplo, una que tenga ${a} o ${b}.`,hintSearch:(left,right)=>`Busca una ficha relacionada con ${left} o con ${right}. Puede que necesites girarla antes de colocarla.`,hintNone:"No encuentro una conexión inmediata. Revisa si alguna ficha del tablero quedó mal colocada.",noHints:"No quedan ayudas disponibles.",alreadyComplete:"La partida ya está completa.",hintUsedLog:"Ayuda usada.",completed:"Partida completada.",finished:"Partida finalizada.",finalScore:score=>`Puntuación final: ${score}.`,summaryPlaced:"Fichas colocadas",summaryHits:"Aciertos",summaryErrors:"Errores",summaryHints:"Ayudas",summaryScore:"Puntuación final",evidenceNote:"Para convertir esta partida en evidencia evaluable, pide al alumnado que explique por escrito tres conexiones correctas del tablero."}};
+let currentLang="eu";
+const pools={basico:[{id:"1/2",frac:"1/2",dec:"0,5",pct:"50%"},{id:"1/4",frac:"1/4",dec:"0,25",pct:"25%"},{id:"3/4",frac:"3/4",dec:"0,75",pct:"75%"},{id:"1/10",frac:"1/10",dec:"0,1",pct:"10%"},{id:"3/10",frac:"3/10",dec:"0,3",pct:"30%"},{id:"7/10",frac:"7/10",dec:"0,7",pct:"70%"},{id:"1/5",frac:"1/5",dec:"0,2",pct:"20%"},{id:"4/5",frac:"4/5",dec:"0,8",pct:"80%"}],intermedio:[{id:"1/5",frac:"1/5",dec:"0,2",pct:"20%"},{id:"2/5",frac:"2/5",dec:"0,4",pct:"40%"},{id:"3/5",frac:"3/5",dec:"0,6",pct:"60%"},{id:"4/5",frac:"4/5",dec:"0,8",pct:"80%"},{id:"1/20",frac:"1/20",dec:"0,05",pct:"5%"},{id:"3/20",frac:"3/20",dec:"0,15",pct:"15%"},{id:"7/20",frac:"7/20",dec:"0,35",pct:"35%"},{id:"9/20",frac:"9/20",dec:"0,45",pct:"45%"},{id:"11/20",frac:"11/20",dec:"0,55",pct:"55%"},{id:"13/20",frac:"13/20",dec:"0,65",pct:"65%"}],avanzado:[{id:"1/8",frac:"1/8",dec:"0,125",pct:"12,5%"},{id:"3/8",frac:"3/8",dec:"0,375",pct:"37,5%"},{id:"5/8",frac:"5/8",dec:"0,625",pct:"62,5%"},{id:"7/8",frac:"7/8",dec:"0,875",pct:"87,5%"},{id:"1/3",frac:"1/3",dec:"0,333…",pct:"33,3%"},{id:"2/3",frac:"2/3",dec:"0,666…",pct:"66,6%"},{id:"1/6",frac:"1/6",dec:"0,166…",pct:"16,6%"},{id:"5/6",frac:"5/6",dec:"0,833…",pct:"83,3%"},{id:"1/12",frac:"1/12",dec:"0,083…",pct:"8,3%"},{id:"5/12",frac:"5/12",dec:"0,416…",pct:"41,6%"}]};
+let rng=Math.random,tiles=[],board=[],selectedId=null,hits=0,errors=0,hints=0,hintLimit=Infinity,gameStarted=false;
+function seededRandom(seed){let h=2166136261>>>0;for(let i=0;i<seed.length;i++){h^=seed.charCodeAt(i);h=Math.imul(h,16777619)}return function(){h+=h<<13;h^=h>>>7;h+=h<<3;h^=h>>>17;h+=h<<5;return((h>>>0)/4294967296)}}
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function getPool(){const level=document.getElementById("level").value;return pools[level]}
+function pickRep(item){const reps=[item.frac,item.dec,item.pct];return reps[Math.floor(rng()*reps.length)]}
+function formatValue(v){if(/^\d+\/\d+$/.test(v)){const[n,d]=v.split("/");return `<span class="frac"><span>${n}</span><span class="bar"></span><span>${d}</span></span>`}return v}
+function buildTiles(pool,count){let chain=[];while(chain.length<count)chain=chain.concat(shuffle(pool));chain=chain.slice(0,count);const out=[];for(let i=0;i<count;i++){const a=chain[i],b=chain[(i+1)%count];out.push({id:"t"+i+"_"+Math.floor(rng()*999999),leftText:pickRep(a),rightText:pickRep(b),leftEq:a.id,rightEq:b.id,leftObj:a,rightObj:b,placed:false})}return shuffle(out)}
+function populateSelects(){const t=i18n[currentLang];const level=document.getElementById("level"),prevLevel=level.value||"basico";level.innerHTML="";Object.entries(t.levels).forEach(([value,label])=>{const opt=document.createElement("option");opt.value=value;opt.textContent=label;level.appendChild(opt)});level.value=prevLevel in t.levels?prevLevel:"basico";const help=document.getElementById("helpMode"),prevHelp=help.value||"normal";help.innerHTML="";Object.entries(t.helpModes).forEach(([value,label])=>{const opt=document.createElement("option");opt.value=value;opt.textContent=label;help.appendChild(opt)});help.value=prevHelp in t.helpModes?prevHelp:"normal"}
+function setLanguage(lang){currentLang=lang;document.documentElement.lang=lang;document.getElementById("langEu").classList.toggle("active",lang==="eu");document.getElementById("langEs").classList.toggle("active",lang==="es");populateSelects();applyTexts();render();if(!document.getElementById("finalPanel").classList.contains("hidden")){renderFinalSummary();renderSolutions()}}
+function applyTexts(){const t=i18n[currentLang];["appTitle","appSubtitle","labelLang","labelLevel","labelCount","labelHelpMode","labelSeed","btnNewGame","btnPrint","statRemainingLabel","statHitsLabel","statErrorsLabel","statHintsLabel","statScoreLabel","boardTitle","placeLeft","rotateBtn","placeRight","handTitle","hintBtn","finishBtn","handHelp","logTitle","finalTitle","equivalencesTitle"].forEach(id=>{});document.getElementById("appTitle").textContent=t.appTitle;document.getElementById("appSubtitle").textContent=t.appSubtitle;document.getElementById("labelLang").textContent=t.labelLang;document.getElementById("labelLevel").textContent=t.labelLevel;document.getElementById("labelCount").textContent=t.labelCount;document.getElementById("labelHelpMode").textContent=t.labelHelpMode;
+document.getElementById("btnNewGame").textContent=t.btnNewGame;document.getElementById("btnPrint").textContent=t.btnPrint;document.getElementById("instructions").innerHTML=t.instructions;document.getElementById("statRemainingLabel").textContent=t.statRemaining;document.getElementById("statHitsLabel").textContent=t.statHits;document.getElementById("statErrorsLabel").textContent=t.statErrors;document.getElementById("statHintsLabel").textContent=t.statHints;document.getElementById("statScoreLabel").textContent=t.statScore;document.getElementById("boardTitle").textContent=t.boardTitle;document.getElementById("placeLeft").textContent=t.placeLeft;document.getElementById("rotateBtn").textContent=t.rotateBtn;document.getElementById("placeRight").textContent=t.placeRight;document.getElementById("handTitle").textContent=t.handTitle;document.getElementById("hintBtn").textContent=t.hintBtn;document.getElementById("finishBtn").textContent=t.finishBtn;document.getElementById("handHelp").textContent=t.handHelp;document.getElementById("logTitle").textContent=t.logTitle;document.getElementById("finalTitle").textContent=t.finalTitle;document.getElementById("equivalencesTitle").textContent=t.equivalencesTitle;setMessage(t.initialMessage,"warn",false)}
+function newGame(){const t=i18n[currentLang];rng = Math.random;const count=Math.max(8,Math.min(28,parseInt(document.getElementById("count").value||"14")));document.getElementById("count").value=count;const helpMode=document.getElementById("helpMode").value;hintLimit=helpMode==="none"?0:helpMode==="limited"?3:Infinity;tiles=buildTiles(getPool(),count);board=[];selectedId=null;hits=0;errors=0;hints=0;gameStarted=true;document.getElementById("finalPanel").classList.add("hidden");document.getElementById("log").innerHTML="";render();setMessage(t.gameGenerated,"warn");addLog(t.newGameLog)}
+function render(){renderHand();renderBoard();updateStats()}
+function renderHand(){const hand=document.getElementById("hand");hand.innerHTML="";tiles.filter(t=>!t.placed).forEach(t=>{const div=document.createElement("div");div.className="tile"+(selectedId===t.id?" selected":"");div.onclick=()=>selectTile(t.id);div.innerHTML=`<div class="half">${formatValue(t.leftText)}</div><div class="half">${formatValue(t.rightText)}</div>`;hand.appendChild(div)})}
+function renderBoard(){
+  const b=document.getElementById("board");
+  const t=i18n[currentLang];
+  b.innerHTML="";
+
+  if(board.length===0){
+    const dz=document.createElement("div");
+    dz.className="dropzone";
+    dz.textContent=t.emptyBoard;
+    b.appendChild(dz);
+    b.style.minHeight="250px";
+    return;
+  }
+
+  const pad=16, gap=8;
+  const horizontalW=171, horizontalH=71;
+  const verticalW=71, verticalH=171;
+
+  const available=Math.max(420, b.clientWidth - pad*2);
+  const perRow=Math.max(2, Math.floor((available + gap)/(horizontalW + gap)));
+
+  let idx=0;
+  let dir=1;               // 1: izquierda -> derecha; -1: derecha -> izquierda
+  let x=pad;
+  let y=pad;
+  let maxY=pad;
+
+  while(idx < board.length){
+    let placedInRun=0;
+    let lastX=x;
+
+    while(placedInRun < perRow && idx < board.length){
+      addBoardTile(board[idx], x, y, false, dir === -1);
+      lastX=x;
+      maxY=Math.max(maxY, y + horizontalH);
+      idx++;
+      placedInRun++;
+
+      if(idx >= board.length) break;
+      x += dir * (horizontalW + gap);
+    }
+
+    if(idx >= board.length) break;
+
+    // Ficha de giro: no se coloca "al lado" de la fila, sino debajo del extremo.
+    let turnX;
+    if(dir === 1){
+      // Extremo derecho: la ficha vertical queda bajo la mitad derecha de la última horizontal.
+      turnX = lastX + horizontalW - verticalW;
+    }else{
+      // Extremo izquierdo: la ficha vertical queda bajo la mitad izquierda de la última horizontal.
+      turnX = lastX;
+    }
+
+    const turnY = y + horizontalH + gap;
+    addBoardTile(board[idx], turnX, turnY, true, false);
+    maxY=Math.max(maxY, turnY + verticalH);
+    idx++;
+
+    // La siguiente fila arranca debajo de la ficha vertical, sin desplazamiento lateral extraño.
+    y = turnY + verticalH + gap;
+    dir *= -1;
+
+    if(dir === -1){
+      // Nueva fila hacia la izquierda: su primera ficha queda alineada bajo el giro derecho.
+      x = turnX + verticalW - horizontalW;
+    }else{
+      // Nueva fila hacia la derecha: su primera ficha queda alineada bajo el giro izquierdo.
+      x = turnX;
+    }
+  }
+
+  b.style.minHeight=Math.max(280, maxY + pad)+"px";
+}
+
+function addBoardTile(tile,x,y,vertical,reverse=false){
+  const b=document.getElementById("board");
+  const div=document.createElement("div");
+  div.className="tile on-board" + (vertical ? " vertical" : "");
+  div.style.left=x+"px";
+  div.style.top=y+"px";
+  div.style.width=(vertical ? 79 : 190)+"px";
+  div.style.height=(vertical ? 190 : 79)+"px";
+
+  const first = reverse ? tile.rightText : tile.leftText;
+  const second = reverse ? tile.leftText : tile.rightText;
+
+  div.innerHTML=`<div class="half">${formatValue(first)}</div><div class="half">${formatValue(second)}</div>`;
+  b.appendChild(div);
+}
+function flipTile(tile){
+  [tile.leftText,tile.rightText]=[tile.rightText,tile.leftText];
+  [tile.leftEq,tile.rightEq]=[tile.rightEq,tile.leftEq];
+  [tile.leftObj,tile.rightObj]=[tile.rightObj,tile.leftObj];
+}
+function selectTile(id){selectedId=selectedId===id?null:id;renderHand()}
+function rotateSelected(){const t=i18n[currentLang],tile=tiles.find(x=>x.id===selectedId&&!x.placed);if(!tile){setMessage(t.selectFirst,"warn");return}flipTile(tile);renderHand()}
+function placeSelected(side){
+  const t=i18n[currentLang];
+  if(!gameStarted){setMessage(t.initialMessage,"warn");return}
+  const tile=tiles.find(x=>x.id===selectedId&&!x.placed);
+  if(!tile){setMessage(t.selectFirst,"warn");return}
+
+  let valid=false;
+  let needed=null;
+  let tried=null;
+
+  if(board.length===0){
+    valid=true;
+  }else if(side==="left"){
+    needed=board[0].leftEq;
+
+    if(tile.rightEq===needed){
+      valid=true;
+    }else if(tile.leftEq===needed){
+      flipTile(tile);
+      valid=true;
+    }
+
+    tried=tile.rightEq;
+  }else{
+    needed=board[board.length-1].rightEq;
+
+    if(tile.leftEq===needed){
+      valid=true;
+    }else if(tile.rightEq===needed){
+      flipTile(tile);
+      valid=true;
+    }
+
+    tried=tile.leftEq;
+  }
+
+  if(valid){
+    tile.placed=true;
+    if(side==="left")board.unshift(tile);else board.push(tile);
+    hits++;
+    selectedId=null;
+    setMessage(t.correct,"ok");
+    addLog(side==="left"?t.placedLeft:t.placedRight);
+    if(tiles.every(x=>x.placed))finishGame(true);else render()
+  }else{
+    errors++;
+    setMessage(t.incorrect(needed,tried),"bad");
+    addLog(t.errorLog);
+    updateStats()
+  }
+}
+function giveHint(){const t=i18n[currentLang];if(!gameStarted){setMessage(t.initialMessage,"warn");return}if(hints>=hintLimit){setMessage(t.noHints,"warn");return}if(tiles.every(x=>x.placed)){setMessage(t.alreadyComplete,"ok");return}hints++;let msg="";if(board.length===0){const tile=tiles.find(x=>!x.placed);msg=t.startAny(tile.leftText,tile.rightText)}else{const leftNeed=board[0].leftEq,rightNeed=board[board.length-1].rightEq;const candidate=tiles.find(tile=>!tile.placed&&(tile.rightEq===leftNeed||tile.leftEq===rightNeed||tile.leftEq===leftNeed||tile.rightEq===rightNeed));msg=candidate?t.hintSearch(leftNeed,rightNeed):t.hintNone}setMessage(msg,"warn");addLog(t.hintUsedLog);updateStats()}
+function updateStats(){const rem=tiles.filter(t=>!t.placed).length,score=Math.max(0,hits*10-errors*4-hints*2);document.getElementById("remaining").textContent=rem;document.getElementById("hits").textContent=hits;document.getElementById("errors").textContent=errors;document.getElementById("hints").textContent=hints;document.getElementById("score").textContent=score}
+function setMessage(text,type){const m=document.getElementById("message");m.className="notice "+type;m.textContent=text}
+function addLog(text){const log=document.getElementById("log"),div=document.createElement("div"),now=new Date().toLocaleTimeString();div.textContent=`${now} — ${text}`;log.prepend(div)}
+function finishGame(auto=false){if(!gameStarted)return;const t=i18n[currentLang],score=Math.max(0,hits*10-errors*4-hints*2),msg=auto?t.completed:t.finished;setMessage(`${msg} ${t.finalScore(score)}`,auto?"ok":"warn");addLog(msg);document.getElementById("finalPanel").classList.remove("hidden");renderFinalSummary();renderSolutions();updateStats()}
+function renderFinalSummary(){const t=i18n[currentLang],placed=tiles.filter(tile=>tile.placed).length,total=tiles.length,score=Math.max(0,hits*10-errors*4-hints*2);document.getElementById("finalSummary").innerHTML=`<p><strong>${t.summaryPlaced}:</strong> ${placed}/${total}</p><p><strong>${t.summaryHits}:</strong> ${hits} · <strong>${t.summaryErrors}:</strong> ${errors} · <strong>${t.summaryHints}:</strong> ${hints}</p><p><strong>${t.summaryScore}:</strong> ${score}</p><p class="small">${t.evidenceNote}</p>`}
+function renderSolutions(){const pool=getPool(),ids=new Set();tiles.forEach(t=>{ids.add(t.leftObj.id);ids.add(t.rightObj.id)});const sol=document.getElementById("solutions");sol.innerHTML="";pool.filter(x=>ids.has(x.id)).forEach(x=>{const d=document.createElement("div");d.className="solution";d.innerHTML=`${formatValue(x.frac)} = ${x.dec} = ${x.pct}`;sol.appendChild(d)})}
+document.addEventListener("DOMContentLoaded",()=>setLanguage("eu"));
+</script>
+</body>
+</html>

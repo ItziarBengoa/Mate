@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Egutegia académico</title>
+<style>
+:root {
+  --blue:#0070c0; --blue2:#5b9bd5; --grid:#111; --page:#f6f7f9; --panel:#fff;
+  --holiday:#ff0000; --saturday:#00b050; --vacation:#7030a0; --work:#111;
+  --vacation-bg:#eaf2fb;
+}
+* { box-sizing:border-box; }
+body { margin:0; font-family:Arial, Helvetica, sans-serif; background:var(--page); color:#111; }
+.toolbar {
+  position:sticky; top:0; z-index:20; display:flex; gap:12px; align-items:center; flex-wrap:wrap;
+  padding:12px 16px; background:#1f2937; color:white; box-shadow:0 2px 8px #0002;
+}
+.toolbar h1 { font-size:18px; margin:0 12px 0 0; font-weight:600; }
+.toolbar label { font-size:13px; opacity:.95; }
+.toolbar select, .toolbar button, .toolbar input {
+  padding:7px 10px; border-radius:6px; border:1px solid #cfd4dc; background:white; color:#111;
+}
+.toolbar input { width: 90px; }
+.toolbar button { cursor:pointer; }
+.toolbar button:hover { filter:brightness(.96); }
+
+.lang-switch {
+  display:inline-flex;
+  align-items:center;
+  gap:0;
+  padding:3px;
+  background:white;
+  border:1px solid #d1d5db;
+  border-radius:999px;
+  box-shadow:0 2px 8px #0002;
+}
+.lang-btn {
+  border:0;
+  background:transparent;
+  color:#005486;
+  min-width:48px;
+  padding:9px 14px;
+  border-radius:999px;
+  cursor:pointer;
+  font-weight:700;
+  font-size:15px;
+  line-height:1;
+  opacity:1;
+}
+.lang-btn.active {
+  background:#005486;
+  color:white;
+  text-decoration:none;
+}
+.lang-btn:hover {
+  filter:none;
+}
+.lang-btn:not(.active):hover {
+  background:#eef6fb;
+}
+
+.wrap { max-width:1120px; margin:22px auto; padding:0 16px 40px; }
+.sheet {
+  position:relative; background:var(--panel); width:980px; min-height:830px; margin:0 auto;
+  padding:34px 44px 48px; border:1px solid #111; box-shadow:0 8px 24px #0002;
+}
+.header {
+  display:block;
+  margin-bottom:24px;
+  text-align:center;
+}
+.shifts {
+  margin-top:8px;
+  font-size:15px;
+  line-height:1.35;
+  text-align:center;
+}
+.title {
+  text-align:center;
+  font-size:28px;
+  letter-spacing:.3px;
+  margin:0;
+  font-weight:600;
+}
+.legend {
+  position:absolute; right:-100px; top:36px; width:84px; border:2px solid #111;
+  background:white; font-size:13px; text-align:center;
+}
+.legend div { padding:2px 4px; border-bottom:1px solid #888; }
+.legend div:last-child{border-bottom:0;}
+.legend .holiday{color:var(--holiday);}
+.legend .saturday{color:var(--saturday);}
+.legend .vacation{color:var(--vacation);}
+.legend .work{color:var(--work);}
+.month-grid { display:grid; grid-template-columns:repeat(3, 1fr); column-gap:34px; row-gap:32px; }
+.month { width:205px; }
+.month-title {
+  background:var(--blue); color:white; text-align:center; font-weight:bold; font-style:italic;
+  border:2px solid #111; border-bottom:0; padding:3px 0 2px; font-size:13px;
+}
+table.cal { border-collapse:collapse; width:205px; table-layout:fixed; border:2px solid #111; }
+table.cal th {
+  background:var(--blue2); color:white; font-style:italic; font-weight:400;
+  font-size:12px; height:18px; border:1px solid #111;
+}
+table.cal td {
+  height:20px; border:1px solid #111; text-align:center; vertical-align:middle;
+  font-size:13px; cursor:pointer; background:white; user-select:none;
+}
+table.cal td.empty { cursor:default; background:white; }
+table.cal td.work { color:var(--work); background:white; }
+table.cal td.holiday { color:var(--holiday); background:white; }
+table.cal td.saturday { color:var(--saturday); background:white; }
+table.cal td.vacation { color:var(--vacation); background:var(--vacation-bg); }
+table.cal td:hover:not(.empty) { outline:2px solid #f59e0b; outline-offset:-2px; }
+.stats { margin-top:3px; display:grid; grid-template-columns:28px 36px; gap:1px 40px; font-size:13px; }
+.stats .label { text-align:left; }
+.stats .val { text-align:right; }
+.note { max-width:980px; margin:14px auto 0; font-size:13px; color:#374151; line-height:1.4; }
+.empty-state {
+  max-width:980px; margin:22px auto; background:white; border:1px dashed #9ca3af;
+  padding:22px; color:#374151; line-height:1.45;
+}
+.hidden { display:none; }
+@media print {
+  .toolbar,.note,.empty-state{display:none;}
+  body{background:white;}
+  .wrap{margin:0;padding:0;}
+  .sheet{box-shadow:none;border:1px solid #111; transform:scale(.88); transform-origin:top left; margin:0;}
+}
+@media (max-width:1120px) {
+  .sheet{transform:scale(.86); transform-origin:top center; margin-bottom:-110px;}
+  .legend{right:-4px; top:36px;}
+}
+</style>
+</head>
+<body>
+<div class="toolbar">
+
+  
+  <div class="lang-switch" aria-label="Hizkuntza / Idioma">
+    <button type="button" class="lang-btn active" data-lang="eu">EU</button>
+    <button type="button" class="lang-btn" data-lang="es">ES</button>
+  </div>
+
+  <label><span data-i18n="courseLabel">Ikasturtea</span>
+    <select id="courseSelect"></select>
+  </label>
+
+  <label><span data-i18n="newCourseLabel">Ikasturte berria</span>
+    <input id="courseInput" type="text" placeholder="2025-2026">
+  </label>
+
+  <button id="generateBtn" data-i18n="generateBtn">Egutegia sortu</button>
+
+  <label><span data-i18n="markAsLabel">Markatu honela</span>
+    <select id="modeSelect">
+      <option value="work" data-i18n="workDay">Laneguna</option>
+      <option value="holiday" data-i18n="holiday">JAIA</option>
+      <option value="saturday" data-i18n="saturday">Larunbata</option>
+      <option value="vacation" data-i18n="vacation">Oporrak</option>
+    </select>
+  </label>
+
+  
+  <button id="resetBtn" data-i18n="resetBtn">Ikasturtea leheneratu</button>
+  <button id="deleteBtn" data-i18n="deleteBtn">Ikasturtea ezabatu</button>
+  <button onclick="window.print()" data-i18n="printBtn">Inprimatu / PDF</button>
+  <button id="exportBtn" data-i18n="exportBtn">JSON esportatu</button>
+</div>
+
+<div id="emptyState" class="empty-state hidden" data-i18n-html="emptyState">
+  Oraindik ez da ikasturterik sortu. Sartu ikasturte bat, adibidez <b>2025-2026</b>, <b>25-26</b> edo <b>2025</b>, eta sakatu <b>Egutegia sortu</b>.
+</div>
+
+<div class="wrap">
+  <div id="sheet" class="sheet hidden">
+    <div class="header">
+      <div class="title"><span data-i18n="calendarTitle">EGUTEGIA</span>&nbsp; <span id="titleYear"></span></div>
+      <div class="shifts">
+        <span data-i18n="intensiveLine">Jardunaldi trinkoa (iraila, ekaina, uztaila eta ostiralak): 8:30-14:30</span><br>
+        <span data-i18n="splitLine">Goiza eta arratsaldea: 9:00-13:00 eta 14:30-16:30</span>
+      </div>
+    </div>
+    <div class="legend">
+      <div class="holiday" data-i18n="holiday">JAIA</div>
+      <div class="saturday" data-i18n="saturday">Larunbata</div>
+      <div class="vacation" data-i18n="vacation">Oporrak</div>
+      <div class="work" data-i18n="workDay">Laneguna</div>
+    </div>
+    <div id="months" class="month-grid"></div>
+  </div>
+
+  <div class="note" data-i18n-html="noteText">
+    Erabilera: sartu ikasturtea eta sakatu <b>Egutegia sortu</b>. Aplikazioak automatikoki sortzen ditu <b>irailetik abuztura</b> bitarteko hilabeteak. Lehenespenez, astelehenetik ostiralera <b>Laneguna</b> gisa sortzen dira, larunbatak <b>Larunbata</b> gisa eta igandeak <b>JAIA</b> gisa; gainera, <b>uztailaren 15etik abuztuaren 31ra</b> bitarteko lanegunak <b>Oporrak</b> gisa markatzen dira, larunbat eta igandeen jatorrizko formatua mantenduta. Ondoren, jaiegunak, oporrak edo bestelako aldaketak eskuz marka ditzakezu. <b>Eg.</b> eta <b>Σ</b> balioak automatikoki birkalkulatzen dira, <b>Laneguna</b> gisa markatutako egunak soilik zenbatuta. Urtero errepikatzen diren jaiegun finko batzuk ere automatikoki markatzen dira: urriaren 12a, azaroaren 1a, abenduaren 6a, 8a eta 25a, eta urtarrilaren 1a eta 6a. Aldaketak nabigatzaile honetan gordetzen dira.
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'egutegia-dynamic-data-v1';
+const LANG_KEY = 'egutegia-language-v1';
+const DEFAULT_LANG = 'eu';
+
+const i18n = {
+  eu: {
+    appTitle: 'Egutegia akademikoa',
+    courseLabel: 'Ikasturtea',
+    newCourseLabel: 'Ikasturte berria',
+    generateBtn: 'Egutegia sortu',
+    markAsLabel: 'Markatu honela',
+    exportBtn: 'JSON esportatu',
+    resetBtn: 'Ikasturtea leheneratu',
+    deleteBtn: 'Ikasturtea ezabatu',
+    printBtn: 'Inprimatu / PDF',
+    calendarTitle: 'EGUTEGIA',
+    intensiveLine: 'Jardunaldi trinkoa (iraila, ekaina, uztaila eta ostiralak): 8:30-14:30',
+    splitLine: 'Goiza eta arratsaldea: 9:00-13:00 eta 14:30-16:30',
+    workDay: 'Laneguna',
+    holiday: 'JAIA',
+    saturday: 'Larunbata',
+    vacation: 'Oporrak',
+    egLabel: 'Eg.',
+    emptyState: 'Oraindik ez da ikasturterik sortu. Sartu ikasturte bat, adibidez <b>2025-2026</b>, <b>25-26</b> edo <b>2025</b>, eta sakatu <b>Egutegia sortu</b>.',
+    noteText: 'Erabilera: sartu ikasturtea eta sakatu <b>Egutegia sortu</b>. Aplikazioak automatikoki sortzen ditu <b>irailetik abuztura</b> bitarteko hilabeteak. Lehenespenez, astelehenetik ostiralera <b>Laneguna</b> gisa sortzen dira, larunbatak <b>Larunbata</b> gisa eta igandeak <b>JAIA</b> gisa; gainera, <b>uztailaren 15etik abuztuaren 31ra</b> bitarteko lanegunak <b>Oporrak</b> gisa markatzen dira, larunbat eta igandeen jatorrizko formatua mantenduta. Ondoren, jaiegunak, oporrak edo bestelako aldaketak eskuz marka ditzakezu. <b>Eg.</b> eta <b>Σ</b> balioak automatikoki birkalkulatzen dira, <b>Laneguna</b> gisa markatutako egunak soilik zenbatuta. Urtero errepikatzen diren jaiegun finko batzuk ere automatikoki markatzen dira: urriaren 12a, azaroaren 1a, abenduaren 6a, 8a eta 25a, eta urtarrilaren 1a eta 6a. Aldaketak nabigatzaile honetan gordetzen dira.',
+    clickTitlePrefix: 'klik honela markatzeko: ',
+    confirmOverwrite: course => `${course} ikasturtea badago lehendik. Berriro sortu nahi duzu zerotik? Ikasturte horretako eskuzko markak galduko dira.`,
+    confirmReset: course => `${course} ikasturtea zerotik sortutako egutegi batera leheneratu nahi duzu?`,
+    confirmDelete: course => `${course} ikasturtea ezabatu nahi duzu?`,
+    errEnterCourse: 'Sartu ikasturte bat.',
+    errConsecutive: 'Ikasturteak bi urte jarraitu hartu behar ditu.',
+    errFormat: 'Formatua ez da ezagutu. Erabili, adibidez, 2025-2026, 25-26 edo 2025.'
+  },
+  es: {
+    appTitle: 'Calendario académico',
+    courseLabel: 'Curso',
+    newCourseLabel: 'Nuevo curso',
+    generateBtn: 'Generar calendario',
+    markAsLabel: 'Marcar como',
+    exportBtn: 'Exportar JSON',
+    resetBtn: 'Restaurar curso',
+    deleteBtn: 'Eliminar curso',
+    printBtn: 'Imprimir / PDF',
+    calendarTitle: 'CALENDARIO',
+    intensiveLine: 'Intensiva (septiembre, junio, julio y viernes): 8:30-14:30',
+    splitLine: 'Mañana y Tarde: 9:00-13:00 y 14:30-16:30',
+    workDay: 'Lan Eguna',
+    holiday: 'JAIA',
+    saturday: 'Sábado',
+    vacation: 'Vacaciones',
+    egLabel: 'Eg.',
+    emptyState: 'No hay ningún curso generado todavía. Introduce un curso, por ejemplo <b>2025-2026</b>, <b>25-26</b> o simplemente <b>2025</b>, y pulsa <b>Generar calendario</b>.',
+    noteText: 'Uso: introduce el curso y pulsa <b>Generar calendario</b>. La aplicación crea automáticamente los meses de <b>septiembre a agosto</b>. Por defecto, los lunes-viernes se generan como <b>Lan Eguna</b>, los sábados como <b>Sábado</b> y los domingos como <b>JAIA</b>; además, los días comprendidos entre el <b>15 de julio y el 31 de agosto</b> se marcan como <b>Vacaciones</b> sólo los días lectivos, manteniendo el formato original de sábados y domingos. Después puedes marcar manualmente festivos, vacaciones u otros cambios. Los valores <b>Eg.</b> y <b>Σ</b> se recalculan contando como lectivos únicamente los días marcados como <b>Lan Eguna</b>. También se marcan automáticamente los festivos fijos recurrentes: 12 de octubre, 1 de noviembre, 6, 8 y 25 de diciembre, y 1 y 6 de enero. Los cambios se guardan en este navegador.',
+    clickTitlePrefix: 'clic para marcar como ',
+    confirmOverwrite: course => `El curso ${course} ya existe. ¿Quieres regenerarlo desde cero? Se perderán las marcas manuales de ese curso.`,
+    confirmReset: course => `¿Restaurar el curso ${course} a un calendario generado desde cero?`,
+    confirmDelete: course => `¿Eliminar el curso ${course}?`,
+    errEnterCourse: 'Introduce un curso.',
+    errConsecutive: 'El curso debe abarcar dos años consecutivos.',
+    errFormat: 'Formato no reconocido. Usa, por ejemplo, 2025-2026, 25-26 o 2025.'
+  }
+};
+
+const daysByLang = {
+  eu: ['Al','Ar','Az','Og','Or','Lr','Ig'],
+  es: ['L','M','X','J','V','S','D']
+};
+
+const monthNamesByLang = {
+  eu: ['URTARRILA','OTSAILA','MARTXOA','APIRILA','MAIATZA','EKAINA','UZTAILA','ABUZTUA','IRAILA','URRIA','AZAROA','ABENDUA'],
+  es: ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE']
+};
+
+const academicMonths = [8,9,10,11,0,1,2,3,4,5,6,7];
+
+let lang = localStorage.getItem(LANG_KEY) || DEFAULT_LANG;
+let data = loadData();
+let currentCourse = Object.keys(data)[0] || null;
+
+function loadData() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  } catch (e) {
+    return {};
+  }
+}
+
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function pad2(n) {
+  return String(n).padStart(2, '0');
+}
+
+function normalizeCourse(raw) {
+  raw = String(raw || '').trim();
+  if (!raw) throw new Error(i18n[lang].errEnterCourse);
+
+  let startYear;
+
+  let m = raw.match(/^(\d{4})\s*[-\/]\s*(\d{4})$/);
+  if (m) {
+    startYear = Number(m[1]);
+    const endYear = Number(m[2]);
+    if (endYear !== startYear + 1) throw new Error(i18n[lang].errConsecutive);
+    return { startYear, endYear, key: `${String(startYear).slice(-2)}-${String(endYear).slice(-2)}` };
+  }
+
+  m = raw.match(/^(\d{2})\s*[-\/]\s*(\d{2})$/);
+  if (m) {
+    const yy1 = Number(m[1]);
+    const yy2 = Number(m[2]);
+    const expected = (yy1 + 1) % 100;
+    if (yy2 !== expected) throw new Error(i18n[lang].errConsecutive);
+    startYear = yy1 >= 70 ? 1900 + yy1 : 2000 + yy1;
+    return { startYear, endYear: startYear + 1, key: `${pad2(yy1)}-${pad2(yy2)}` };
+  }
+
+  m = raw.match(/^(\d{4})$/);
+  if (m) {
+    startYear = Number(m[1]);
+    return { startYear, endYear: startYear + 1, key: `${String(startYear).slice(-2)}-${String(startYear + 1).slice(-2)}` };
+  }
+
+  m = raw.match(/^(\d{2})$/);
+  if (m) {
+    const yy = Number(m[1]);
+    startYear = yy >= 70 ? 1900 + yy : 2000 + yy;
+    return { startYear, endYear: startYear + 1, key: `${pad2(yy)}-${pad2((yy + 1) % 100)}` };
+  }
+
+  throw new Error(i18n[lang].errFormat);
+}
+
+function mondayBasedDay(date) {
+  // JS: domingo=0, lunes=1... sábado=6. Queremos lunes=0... domingo=6.
+  return (date.getDay() + 6) % 7;
+}
+
+function isFixedHoliday(date) {
+  const month = date.getMonth(); // 0=enero
+  const day = date.getDate();
+
+  return (
+    (month === 9 && day === 12) ||   // 12 octubre
+    (month === 10 && day === 1) ||   // 1 noviembre
+    (month === 11 && (day === 6 || day === 8 || day === 25)) || // 6, 8, 25 diciembre
+    (month === 0 && (day === 1 || day === 6)) // 1, 6 enero
+  );
+}
+
+function defaultStatus(date) {
+  const month = date.getMonth(); // 0=enero ... 6=julio ... 7=agosto
+  const day = date.getDate();
+  const d = date.getDay();
+
+  // Festivos fijos comunes del calendario.
+  if (isFixedHoliday(date)) return 'holiday';
+
+  // Se conserva siempre el formato propio de sábados y domingos.
+  // La marca Oporrak sólo se aplica a días lectivos del 15 de julio al 31 de agosto.
+  if (d === 6) return 'saturday';
+  if (d === 0) return 'holiday';
+
+  if ((month === 6 && day >= 15) || month === 7) return 'vacation';
+
+  return 'work';
+}
+
+function generateMonth(year, monthIndex) {
+  const first = new Date(year, monthIndex, 1);
+  const lastDay = new Date(year, monthIndex + 1, 0).getDate();
+  const offset = mondayBasedDay(first);
+  const weeks = [];
+  let day = 1;
+
+  for (let wi = 0; wi < 6; wi++) {
+    const week = [];
+    for (let di = 0; di < 7; di++) {
+      if ((wi === 0 && di < offset) || day > lastDay) {
+        week.push(null);
+      } else {
+        const date = new Date(year, monthIndex, day);
+        week.push({
+          day,
+          status: defaultStatus(date),
+          date: `${year}-${pad2(monthIndex + 1)}-${pad2(day)}`
+        });
+        day++;
+      }
+    }
+    weeks.push(week);
+  }
+
+  return {
+    monthIndex,
+    year,
+    month: monthIndex + 1,
+    weeks
+  };
+}
+
+function generateAcademicCourse(startYear) {
+  return academicMonths.map(monthIndex => {
+    const year = monthIndex >= 8 ? startYear : startYear + 1;
+    return generateMonth(year, monthIndex);
+  });
+}
+
+
+function applyLanguage() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (i18n[lang][key] !== undefined) el.textContent = i18n[lang][key];
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const key = el.getAttribute('data-i18n-html');
+    if (i18n[lang][key] !== undefined) el.innerHTML = i18n[lang][key];
+  });
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === lang);
+  });
+}
+
+function refreshCourseSelect() {
+  const select = document.getElementById('courseSelect');
+  select.innerHTML = '';
+
+  const keys = Object.keys(data).sort((a,b) => {
+    const aa = Number(a.split('-')[0]);
+    const bb = Number(b.split('-')[0]);
+    return aa - bb;
+  });
+
+  keys.forEach(key => {
+    const option = document.createElement('option');
+    option.value = key;
+    option.textContent = key;
+    select.appendChild(option);
+  });
+
+  if (!currentCourse || !data[currentCourse]) {
+    currentCourse = keys[0] || null;
+  }
+
+  if (currentCourse) select.value = currentCourse;
+}
+
+function monthCount(m) {
+  return m.weeks.flat().filter(d => d && d.status === 'work').length;
+}
+
+function cumulative(index) {
+  let s = 0;
+  for (let i = 0; i <= index; i++) s += monthCount(data[currentCourse][i]);
+  return s;
+}
+
+function render() {
+  applyLanguage();
+  refreshCourseSelect();
+
+  const sheet = document.getElementById('sheet');
+  const empty = document.getElementById('emptyState');
+  const cont = document.getElementById('months');
+
+  if (!currentCourse) {
+    sheet.classList.add('hidden');
+    empty.classList.remove('hidden');
+    cont.innerHTML = '';
+    return;
+  }
+
+  sheet.classList.remove('hidden');
+  empty.classList.add('hidden');
+  document.getElementById('titleYear').textContent = currentCourse;
+  cont.innerHTML = '';
+
+  data[currentCourse].forEach((m, mi) => {
+    const box = document.createElement('div');
+    box.className = 'month';
+
+    const title = document.createElement('div');
+    title.className = 'month-title';
+    title.textContent = (monthNamesByLang[lang] || monthNamesByLang.eu)[m.monthIndex];
+    box.appendChild(title);
+
+    const table = document.createElement('table');
+    table.className = 'cal';
+
+    const thead = document.createElement('thead');
+    const trh = document.createElement('tr');
+    (daysByLang[lang] || daysByLang.eu).forEach(d => {
+      const th = document.createElement('th');
+      th.textContent = d;
+      trh.appendChild(th);
+    });
+    thead.appendChild(trh);
+    table.appendChild(thead);
+
+    const tb = document.createElement('tbody');
+
+    m.weeks.forEach(w => {
+      const tr = document.createElement('tr');
+      w.forEach(cell => {
+        const td = document.createElement('td');
+
+        if (!cell) {
+          td.className = 'empty';
+          td.textContent = '';
+        } else {
+          td.textContent = cell.day;
+          td.className = cell.status;
+          td.title = cell.date + ' · ' + i18n[lang].clickTitlePrefix + document.getElementById('modeSelect').selectedOptions[0].textContent;
+          td.addEventListener('click', () => {
+            cell.status = document.getElementById('modeSelect').value;
+            save();
+            render();
+          });
+        }
+
+        tr.appendChild(td);
+      });
+      tb.appendChild(tr);
+    });
+
+    table.appendChild(tb);
+    box.appendChild(table);
+
+    const stats = document.createElement('div');
+    stats.className = 'stats';
+    stats.innerHTML =
+      '<div class="label">' + i18n[lang].egLabel + '</div><div class="val">' + monthCount(m) + '</div>' +
+      '<div class="label">Σ:</div><div class="val">' + cumulative(mi) + '</div>';
+    box.appendChild(stats);
+
+    cont.appendChild(box);
+  });
+}
+
+document.getElementById('generateBtn').addEventListener('click', () => {
+  try {
+    const parsed = normalizeCourse(document.getElementById('courseInput').value);
+    if (data[parsed.key]) {
+      const overwrite = confirm(i18n[lang].confirmOverwrite(parsed.key));
+      if (!overwrite) {
+        currentCourse = parsed.key;
+        render();
+        return;
+      }
+    }
+
+    data[parsed.key] = generateAcademicCourse(parsed.startYear);
+    currentCourse = parsed.key;
+    save();
+    document.getElementById('courseInput').value = '';
+    render();
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+document.getElementById('courseInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('generateBtn').click();
+});
+
+document.getElementById('courseSelect').addEventListener('change', e => {
+  currentCourse = e.target.value;
+  render();
+});
+
+document.getElementById('modeSelect').addEventListener('change', render);
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (!currentCourse) return;
+  const parsed = normalizeCourse(currentCourse);
+  if (confirm(i18n[lang].confirmReset(currentCourse))) {
+    data[currentCourse] = generateAcademicCourse(parsed.startYear);
+    save();
+    render();
+  }
+});
+
+document.getElementById('deleteBtn').addEventListener('click', () => {
+  if (!currentCourse) return;
+  if (confirm(i18n[lang].confirmDelete(currentCourse))) {
+    delete data[currentCourse];
+    currentCourse = Object.keys(data)[0] || null;
+    save();
+    render();
+  }
+});
+
+document.querySelectorAll('.lang-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    lang = btn.dataset.lang || DEFAULT_LANG;
+    localStorage.setItem(LANG_KEY, lang);
+    render();
+  });
+});
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'egutegia-datos.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+render();
+</script>
+</body>
+</html>

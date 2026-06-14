@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="es">
+<html lang="eu">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Egutegia académico</title>
+<title>Egutegi akademikoa</title>
 <style>
 :root {
   --blue:#0070c0; --blue2:#5b9bd5; --grid:#111; --page:#f6f7f9; --panel:#fff;
@@ -84,7 +84,7 @@ body { margin:0; font-family:Arial, Helvetica, sans-serif; background:var(--page
   font-weight:600;
 }
 .legend {
-  position:absolute; right:-100px; top:36px; width:84px; border:2px solid #111;
+  position:absolute; right:44px; top:42px; width:84px; border:2px solid #111;
   background:white; font-size:13px; text-align:center;
 }
 .legend div { padding:2px 4px; border-bottom:1px solid #888; }
@@ -118,20 +118,176 @@ table.cal td:hover:not(.empty) { outline:2px solid #f59e0b; outline-offset:-2px;
 .stats .label { text-align:left; }
 .stats .val { text-align:right; }
 .note { max-width:980px; margin:14px auto 0; font-size:13px; color:#374151; line-height:1.4; }
+.save-info {
+  max-width:980px;
+  margin:12px auto 0;
+  padding:8px 12px;
+  background:white;
+  border:1px solid #d1d5db;
+  border-left:4px solid var(--blue);
+  border-radius:6px;
+  color:#374151;
+  font-size:13px;
+  line-height:1.35;
+}
+.note p {
+  margin:0 0 6px;
+}
+.note p:last-child {
+  margin-bottom:0;
+}
+
 .empty-state {
   max-width:980px; margin:22px auto; background:white; border:1px dashed #9ca3af;
   padding:22px; color:#374151; line-height:1.45;
 }
 .hidden { display:none; }
-@media print {
-  .toolbar,.note,.empty-state{display:none;}
-  body{background:white;}
-  .wrap{margin:0;padding:0;}
-  .sheet{box-shadow:none;border:1px solid #111; transform:scale(.88); transform-origin:top left; margin:0;}
+@page {
+  size: A4 portrait;
+  margin: 7mm;
 }
+
+@media print {
+  html, body {
+    width:100%;
+    margin:0;
+    padding:0;
+    background:white;
+    -webkit-print-color-adjust:exact !important;
+    print-color-adjust:exact !important;
+  }
+
+  * {
+    -webkit-print-color-adjust:exact !important;
+    print-color-adjust:exact !important;
+  }
+
+  .toolbar,
+  .note,
+  .save-info,
+  .empty-state {
+    display:none !important;
+  }
+
+  .wrap {
+    max-width:none;
+    width:100%;
+    margin:0;
+    padding:0;
+  }
+
+  .sheet {
+    display:flex;
+    flex-direction:column;
+    position:relative;
+    width:100%;
+    min-height:auto;
+    margin:0;
+    padding:7mm;
+    border:1.2pt solid #111;
+    box-shadow:none;
+    transform:none !important;
+    page-break-inside:avoid;
+    overflow:hidden;
+  }
+
+  .header {
+    order:1;
+    margin-bottom:5mm;
+    text-align:center;
+  }
+
+  .title {
+    font-size:18pt;
+    line-height:1.1;
+  }
+
+  .shifts {
+    margin-top:2mm;
+    font-size:8pt;
+    line-height:1.25;
+  }
+
+  .month-grid {
+    order:2;
+    display:grid;
+    grid-template-columns:repeat(3, 56mm);
+    justify-content:center;
+    column-gap:6mm;
+    row-gap:5mm;
+    margin-top:8mm;
+  }
+
+  .month {
+    width:56mm;
+    break-inside:avoid;
+    page-break-inside:avoid;
+  }
+
+  .month-title {
+    height:4.2mm;
+    padding:.6mm 0 0;
+    font-size:8pt;
+    border:1.2pt solid #111;
+    border-bottom:0;
+  }
+
+  table.cal {
+    width:56mm;
+    border:1.2pt solid #111;
+  }
+
+  table.cal th {
+    height:3.6mm;
+    font-size:7.5pt;
+    border:.6pt solid #111;
+  }
+
+  table.cal td {
+    height:4.2mm;
+    font-size:8pt;
+    border:.6pt solid #111;
+  }
+
+  table.cal td:hover:not(.empty) {
+    outline:none;
+  }
+
+  .stats {
+    margin-top:1mm;
+    grid-template-columns:9mm 12mm;
+    gap:.5mm 12mm;
+    font-size:7.5pt;
+  }
+
+  .legend {
+    position:absolute;
+    right:6mm;
+    top:2.5mm;
+    display:block;
+    width:22mm;
+    margin:0;
+    border:1.2pt solid #111;
+    font-size:6.8pt;
+    line-height:1.15;
+    background:white;
+    text-align:center;
+  }
+
+  .legend div {
+    padding:.6mm 1mm;
+    border-bottom:.6pt solid #777;
+    border-right:0;
+  }
+
+  .legend div:last-child {
+    border-bottom:0;
+  }
+}
+
 @media (max-width:1120px) {
   .sheet{transform:scale(.86); transform-origin:top center; margin-bottom:-110px;}
-  .legend{right:-4px; top:36px;}
+  .legend{right:24px; top:42px;}
 }
 </style>
 </head>
@@ -156,8 +312,8 @@ table.cal td:hover:not(.empty) { outline:2px solid #f59e0b; outline-offset:-2px;
 
   <label><span data-i18n="markAsLabel">Markatu honela</span>
     <select id="modeSelect">
-      <option value="work" data-i18n="workDay">Laneguna</option>
-      <option value="holiday" data-i18n="holiday">JAIA</option>
+      <option value="work" data-i18n="workDay">Lan eguna</option>
+      <option value="holiday" data-i18n="holiday">Jai eguna</option>
       <option value="saturday" data-i18n="saturday">Larunbata</option>
       <option value="vacation" data-i18n="vacation">Oporrak</option>
     </select>
@@ -165,9 +321,15 @@ table.cal td:hover:not(.empty) { outline:2px solid #f59e0b; outline-offset:-2px;
 
   
   <button id="resetBtn" data-i18n="resetBtn">Ikasturtea leheneratu</button>
-  <button id="deleteBtn" data-i18n="deleteBtn">Ikasturtea ezabatu</button>
-  <button onclick="window.print()" data-i18n="printBtn">Inprimatu / PDF</button>
+  <button id="deleteBtn" data-i18n="deleteBtn">Egutegia ezabatu</button>
+  <button id="printBtn" data-i18n="printBtn">Inprimatu / PDF</button>
   <button id="exportBtn" data-i18n="exportBtn">JSON esportatu</button>
+  <button id="importBtn" data-i18n="importBtn">JSON inportatu</button>
+  <input id="importInput" type="file" accept="application/json,.json" hidden>
+</div>
+
+<div class="save-info" data-i18n-html="saveInfo">
+  Aldaketak nabigatzaile honetan soilik gordetzen dira. Kopia bat egiteko edo beste gailu batean lan egiteko, esportatu JSON fitxategia.
 </div>
 
 <div id="emptyState" class="empty-state hidden" data-i18n-html="emptyState">
@@ -184,52 +346,58 @@ table.cal td:hover:not(.empty) { outline:2px solid #f59e0b; outline-offset:-2px;
       </div>
     </div>
     <div class="legend">
-      <div class="holiday" data-i18n="holiday">JAIA</div>
+      <div class="holiday" data-i18n="holiday">Jai eguna</div>
       <div class="saturday" data-i18n="saturday">Larunbata</div>
       <div class="vacation" data-i18n="vacation">Oporrak</div>
-      <div class="work" data-i18n="workDay">Laneguna</div>
+      <div class="work" data-i18n="workDay">Lan eguna</div>
     </div>
     <div id="months" class="month-grid"></div>
   </div>
 
   <div class="note" data-i18n-html="noteText">
-    Erabilera: sartu ikasturtea eta sakatu <b>Egutegia sortu</b>. Aplikazioak automatikoki sortzen ditu <b>irailetik abuztura</b> bitarteko hilabeteak. Lehenespenez, astelehenetik ostiralera <b>Laneguna</b> gisa sortzen dira, larunbatak <b>Larunbata</b> gisa eta igandeak <b>JAIA</b> gisa; gainera, <b>uztailaren 15etik abuztuaren 31ra</b> bitarteko lanegunak <b>Oporrak</b> gisa markatzen dira, larunbat eta igandeen jatorrizko formatua mantenduta. Ondoren, jaiegunak, oporrak edo bestelako aldaketak eskuz marka ditzakezu. <b>Eg.</b> eta <b>Σ</b> balioak automatikoki birkalkulatzen dira, <b>Laneguna</b> gisa markatutako egunak soilik zenbatuta. Urtero errepikatzen diren jaiegun finko batzuk ere automatikoki markatzen dira: urriaren 12a, azaroaren 1a, abenduaren 6a, 8a eta 25a, eta urtarrilaren 1a eta 6a. Aldaketak nabigatzaile honetan gordetzen dira.
+    <p>Erabilera: sartu ikasturtea eta sakatu <b>Egutegia sortu</b>.</p><p>Aplikazioak automatikoki sortzen ditu <b>irailetik abuztura</b> bitarteko hilabeteak.</p><p>Lehenespenez, astelehenetik ostiralera bitarteko egunak <b>Lan eguna</b> gisa sortzen dira, larunbatak <b>Larunbata</b> gisa eta igandeak <b>Jai eguna</b> gisa; gainera, <b>abenduaren 24tik urtarrilaren 6ra</b> eta <b>uztailaren 15etik abuztuaren 31ra</b> bitarteko lanegunak <b>Oporrak</b> gisa markatzen dira, larunbat eta igandeen jatorrizko formatua mantenduta. Era berean, urtero errepikatzen diren <b>jaiegun finkoak</b> automatikoki markatzen dira: <b>urriaren 12a, azaroaren 1a, abenduaren 6a, 8a eta 25a, eta urtarrilaren 1a eta 6a</b>.</p><p>Ondoren, jaiegunak, oporrak edo bestelako aldaketak eskuz marka ditzakezu. <b>Eg.</b> eta <b>Σ</b> balioak <b>Lan eguna</b> gisa markatutako egunak soilik kontuan hartuta birkalkulatzen dira.</p>
   </div>
 </div>
 
 <script>
 const STORAGE_KEY = 'egutegia-dynamic-data-v1';
-const LANG_KEY = 'egutegia-language-v1';
 const DEFAULT_LANG = 'eu';
 
 const i18n = {
   eu: {
-    appTitle: 'Egutegia akademikoa',
+    appTitle: 'Egutegi akademikoa',
     courseLabel: 'Ikasturtea',
     newCourseLabel: 'Ikasturte berria',
     generateBtn: 'Egutegia sortu',
     markAsLabel: 'Markatu honela',
     exportBtn: 'JSON esportatu',
-    resetBtn: 'Ikasturtea leheneratu',
-    deleteBtn: 'Ikasturtea ezabatu',
+    importBtn: 'JSON inportatu',
+    resetBtn: 'Egutegia berbiarazi',
+    deleteBtn: 'Egutegia ezabatu',
     printBtn: 'Inprimatu / PDF',
     calendarTitle: 'EGUTEGIA',
     intensiveLine: 'Jardunaldi trinkoa (iraila, ekaina, uztaila eta ostiralak): 8:30-14:30',
     splitLine: 'Goiza eta arratsaldea: 9:00-13:00 eta 14:30-16:30',
-    workDay: 'Laneguna',
-    holiday: 'JAIA',
+    workDay: 'Lan eguna',
+    holiday: 'Jai eguna',
     saturday: 'Larunbata',
     vacation: 'Oporrak',
     egLabel: 'Eg.',
     emptyState: 'Oraindik ez da ikasturterik sortu. Sartu ikasturte bat, adibidez <b>2025-2026</b>, <b>25-26</b> edo <b>2025</b>, eta sakatu <b>Egutegia sortu</b>.',
-    noteText: 'Erabilera: sartu ikasturtea eta sakatu <b>Egutegia sortu</b>. Aplikazioak automatikoki sortzen ditu <b>irailetik abuztura</b> bitarteko hilabeteak. Lehenespenez, astelehenetik ostiralera <b>Laneguna</b> gisa sortzen dira, larunbatak <b>Larunbata</b> gisa eta igandeak <b>JAIA</b> gisa; gainera, <b>uztailaren 15etik abuztuaren 31ra</b> bitarteko lanegunak <b>Oporrak</b> gisa markatzen dira, larunbat eta igandeen jatorrizko formatua mantenduta. Ondoren, jaiegunak, oporrak edo bestelako aldaketak eskuz marka ditzakezu. <b>Eg.</b> eta <b>Σ</b> balioak automatikoki birkalkulatzen dira, <b>Laneguna</b> gisa markatutako egunak soilik zenbatuta. Urtero errepikatzen diren jaiegun finko batzuk ere automatikoki markatzen dira: urriaren 12a, azaroaren 1a, abenduaren 6a, 8a eta 25a, eta urtarrilaren 1a eta 6a. Aldaketak nabigatzaile honetan gordetzen dira.',
+    saveInfo: 'Aldaketak nabigatzaile honetan soilik gordetzen dira. Kopia bat egiteko edo beste gailu batean lan egiteko, esportatu JSON fitxategia.',
+    noteText: '<p>Erabilera: sartu ikasturtea eta sakatu <b>Egutegia sortu</b>.</p><p>Aplikazioak automatikoki sortzen ditu <b>irailetik abuztura</b> bitarteko hilabeteak.</p><p>Lehenespenez, astelehenetik ostiralera bitarteko egunak <b>Lan eguna</b> gisa sortzen dira, larunbatak <b>Larunbata</b> gisa eta igandeak <b>Jai eguna</b> gisa; gainera, <b>abenduaren 24tik urtarrilaren 6ra</b> eta <b>uztailaren 15etik abuztuaren 31ra</b> bitarteko lanegunak <b>Oporrak</b> gisa markatzen dira, larunbat eta igandeen jatorrizko formatua mantenduta. Era berean, urtero errepikatzen diren <b>jaiegun finkoak</b> automatikoki markatzen dira: <b>urriaren 12a, azaroaren 1a, abenduaren 6a, 8a eta 25a, eta urtarrilaren 1a eta 6a</b>.</p><p>Ondoren, jaiegunak, oporrak edo bestelako aldaketak eskuz marka ditzakezu. <b>Eg.</b> eta <b>Σ</b> balioak <b>Lan eguna</b> gisa markatutako egunak soilik kontuan hartuta birkalkulatzen dira.</p>',
     clickTitlePrefix: 'klik honela markatzeko: ',
     confirmOverwrite: course => `${course} ikasturtea badago lehendik. Berriro sortu nahi duzu zerotik? Ikasturte horretako eskuzko markak galduko dira.`,
-    confirmReset: course => `${course} ikasturtea zerotik sortutako egutegi batera leheneratu nahi duzu?`,
-    confirmDelete: course => `${course} ikasturtea ezabatu nahi duzu?`,
+    confirmReset: course => `${course} ikasturteko egutegia oinarrizko arauekin berregingo da. Eskuz egindako markak galduko dira. Jarraitu nahi duzu?`,
+    confirmDelete: course => `${course} ikasturteko egutegia ezabatu nahi duzu?`,
     errEnterCourse: 'Sartu ikasturte bat.',
     errConsecutive: 'Ikasturteak bi urte jarraitu hartu behar ditu.',
-    errFormat: 'Formatua ez da ezagutu. Erabili, adibidez, 2025-2026, 25-26 edo 2025.'
+    errFormat: 'Formatua ez da ezagutu. Erabili, adibidez, 2025-2026, 25-26 edo 2025.',
+    importSuccess: 'JSON fitxategia behar bezala inportatu da.',
+    importNoChanges: 'Ez da egutegirik inportatu.',
+    confirmImportOverwrite: course => `${course} ikasturtea badago lehendik. Inportatutako bertsioarekin ordezkatu nahi duzu?`,
+    errImportInvalid: 'JSON fitxategiak ez du egutegi honen egitura egokia.',
+    errImportRead: 'Ezin izan da JSON fitxategia irakurri.'
   },
   es: {
     appTitle: 'Calendario académico',
@@ -238,26 +406,33 @@ const i18n = {
     generateBtn: 'Generar calendario',
     markAsLabel: 'Marcar como',
     exportBtn: 'Exportar JSON',
-    resetBtn: 'Restaurar curso',
-    deleteBtn: 'Eliminar curso',
+    importBtn: 'Importar JSON',
+    resetBtn: 'Reiniciar calendario',
+    deleteBtn: 'Eliminar calendario',
     printBtn: 'Imprimir / PDF',
     calendarTitle: 'CALENDARIO',
     intensiveLine: 'Intensiva (septiembre, junio, julio y viernes): 8:30-14:30',
-    splitLine: 'Mañana y Tarde: 9:00-13:00 y 14:30-16:30',
-    workDay: 'Lan Eguna',
-    holiday: 'JAIA',
+    splitLine: 'Mañana y tarde: 9:00-13:00 y 14:30-16:30',
+    workDay: 'Laborable',
+    holiday: 'Festivo',
     saturday: 'Sábado',
     vacation: 'Vacaciones',
     egLabel: 'Eg.',
     emptyState: 'No hay ningún curso generado todavía. Introduce un curso, por ejemplo <b>2025-2026</b>, <b>25-26</b> o simplemente <b>2025</b>, y pulsa <b>Generar calendario</b>.',
-    noteText: 'Uso: introduce el curso y pulsa <b>Generar calendario</b>. La aplicación crea automáticamente los meses de <b>septiembre a agosto</b>. Por defecto, los lunes-viernes se generan como <b>Lan Eguna</b>, los sábados como <b>Sábado</b> y los domingos como <b>JAIA</b>; además, los días comprendidos entre el <b>15 de julio y el 31 de agosto</b> se marcan como <b>Vacaciones</b> sólo los días lectivos, manteniendo el formato original de sábados y domingos. Después puedes marcar manualmente festivos, vacaciones u otros cambios. Los valores <b>Eg.</b> y <b>Σ</b> se recalculan contando como lectivos únicamente los días marcados como <b>Lan Eguna</b>. También se marcan automáticamente los festivos fijos recurrentes: 12 de octubre, 1 de noviembre, 6, 8 y 25 de diciembre, y 1 y 6 de enero. Los cambios se guardan en este navegador.',
+    saveInfo: 'Los cambios se guardan solo en este navegador. Para conservar una copia o trabajar en otro dispositivo, exporta el JSON.',
+    noteText: '<p>Uso: introduce el curso y pulsa <b>Generar calendario</b>.</p><p>La aplicación crea automáticamente los meses de <b>septiembre a agosto</b>.</p><p>Por defecto, los lunes-viernes se generan como <b>Laborable</b>, los sábados como <b>Sábado</b> y los domingos como <b>Festivo</b>; además, los días laborables comprendidos entre el <b>24 de diciembre y el 6 de enero</b> y entre el <b>15 de julio y el 31 de agosto</b> se marcan como <b>Vacaciones</b>, manteniendo el formato original de sábados y domingos. También se marcan automáticamente los <b>festivos fijos</b> recurrentes: <b>12 de octubre, 1 de noviembre, 6, 8 y 25 de diciembre, y 1 y 6 de enero</b>.</p><p>Después puedes marcar manualmente festivos, vacaciones u otros cambios. Los valores <b>Eg.</b> y <b>Σ</b> se recalculan contando como lectivos únicamente los días marcados como <b>Laborable</b>.</p>',
     clickTitlePrefix: 'clic para marcar como ',
     confirmOverwrite: course => `El curso ${course} ya existe. ¿Quieres regenerarlo desde cero? Se perderán las marcas manuales de ese curso.`,
-    confirmReset: course => `¿Restaurar el curso ${course} a un calendario generado desde cero?`,
-    confirmDelete: course => `¿Eliminar el curso ${course}?`,
+    confirmReset: course => `Se rehacerá el calendario del curso ${course} con las reglas iniciales. Se perderán las marcas manuales. ¿Quieres continuar?`,
+    confirmDelete: course => `¿Eliminar el calendario del curso ${course}?`,
     errEnterCourse: 'Introduce un curso.',
     errConsecutive: 'El curso debe abarcar dos años consecutivos.',
-    errFormat: 'Formato no reconocido. Usa, por ejemplo, 2025-2026, 25-26 o 2025.'
+    errFormat: 'Formato no reconocido. Usa, por ejemplo, 2025-2026, 25-26 o 2025.',
+    importSuccess: 'El archivo JSON se ha importado correctamente.',
+    importNoChanges: 'No se ha importado ningún calendario.',
+    confirmImportOverwrite: course => `El curso ${course} ya existe. ¿Quieres sustituirlo por la versión importada?`,
+    errImportInvalid: 'El archivo JSON no tiene una estructura válida para este calendario.',
+    errImportRead: 'No se ha podido leer el archivo JSON.'
   }
 };
 
@@ -273,7 +448,7 @@ const monthNamesByLang = {
 
 const academicMonths = [8,9,10,11,0,1,2,3,4,5,6,7];
 
-let lang = localStorage.getItem(LANG_KEY) || DEFAULT_LANG;
+let lang = DEFAULT_LANG;
 let data = loadData();
 let currentCourse = Object.keys(data)[0] || null;
 
@@ -351,7 +526,7 @@ function isFixedHoliday(date) {
 }
 
 function defaultStatus(date) {
-  const month = date.getMonth(); // 0=enero ... 6=julio ... 7=agosto
+  const month = date.getMonth(); // 0=enero ... 6=julio ... 7=agosto ... 11=diciembre
   const day = date.getDate();
   const d = date.getDay();
 
@@ -359,11 +534,14 @@ function defaultStatus(date) {
   if (isFixedHoliday(date)) return 'holiday';
 
   // Se conserva siempre el formato propio de sábados y domingos.
-  // La marca Oporrak sólo se aplica a días lectivos del 15 de julio al 31 de agosto.
+  // La marca Oporrak/Vacaciones sólo se aplica a días laborables.
   if (d === 6) return 'saturday';
   if (d === 0) return 'holiday';
 
-  if ((month === 6 && day >= 15) || month === 7) return 'vacation';
+  const isSummerVacation = (month === 6 && day >= 15) || month === 7;
+  const isChristmasVacation = (month === 11 && day >= 24) || (month === 0 && day <= 6);
+
+  if (isSummerVacation || isChristmasVacation) return 'vacation';
 
   return 'work';
 }
@@ -411,6 +589,7 @@ function generateAcademicCourse(startYear) {
 
 function applyLanguage() {
   document.documentElement.lang = lang;
+  document.title = i18n[lang].appTitle;
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
     if (i18n[lang][key] !== undefined) el.textContent = i18n[lang][key];
@@ -450,6 +629,32 @@ function refreshCourseSelect() {
 
 function monthCount(m) {
   return m.weeks.flat().filter(d => d && d.status === 'work').length;
+}
+
+function currentCourseSafeName() {
+  if (!currentCourse) return 'Egutegia';
+  const safeCourse = currentCourse.replace(/[^0-9A-Za-z_-]/g, '_');
+  return `Egutegia_${safeCourse}`;
+}
+
+function setPrintDocumentTitle() {
+  if (currentCourse) document.title = currentCourseSafeName();
+}
+
+function restoreDocumentTitle() {
+  document.title = i18n[lang].appTitle;
+}
+
+function buildExportPayload(courseKey) {
+  return {
+    app: 'EgutegiSortzailea',
+    schemaVersion: 1,
+    exportedAt: new Date().toISOString(),
+    course: courseKey,
+    courses: {
+      [courseKey]: data[courseKey]
+    }
+  };
 }
 
 function cumulative(index) {
@@ -596,16 +801,146 @@ document.getElementById('deleteBtn').addEventListener('click', () => {
 document.querySelectorAll('.lang-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     lang = btn.dataset.lang || DEFAULT_LANG;
-    localStorage.setItem(LANG_KEY, lang);
     render();
   });
 });
 
+
+function isValidCourseDataMap(obj) {
+  const validStatuses = new Set(['work', 'holiday', 'saturday', 'vacation']);
+
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return false;
+
+  return Object.keys(obj).every(courseKey => {
+    if (!/^\d{2}-\d{2}$/.test(courseKey)) return false;
+    const months = obj[courseKey];
+    if (!Array.isArray(months) || months.length !== 12) return false;
+
+    return months.every(monthData => {
+      if (!monthData || typeof monthData !== 'object') return false;
+      if (!Number.isInteger(monthData.monthIndex)) return false;
+      if (!Number.isInteger(monthData.year)) return false;
+      if (!Number.isInteger(monthData.month)) return false;
+      if (!Array.isArray(monthData.weeks)) return false;
+
+      return monthData.weeks.every(week => {
+        if (!Array.isArray(week)) return false;
+
+        return week.every(cell => {
+          if (cell === null) return true;
+          if (!cell || typeof cell !== 'object') return false;
+          if (!Number.isInteger(cell.day)) return false;
+          if (!validStatuses.has(cell.status)) return false;
+          if (typeof cell.date !== 'string') return false;
+          return true;
+        });
+      });
+    });
+  });
+}
+
+function normalizeImportedCourses(obj) {
+  // Formato antiguo: { "26-27": [...] }
+  if (isValidCourseDataMap(obj)) return obj;
+
+  // Formato nuevo: { app, schemaVersion, exportedAt, course, courses: { "26-27": [...] } }
+  if (
+    obj &&
+    typeof obj === 'object' &&
+    !Array.isArray(obj) &&
+    obj.app === 'EgutegiSortzailea' &&
+    isValidCourseDataMap(obj.courses)
+  ) {
+    return obj.courses;
+  }
+
+  return null;
+}
+
+function firstCourseKey(obj) {
+  const keys = Object.keys(obj).sort((a,b) => {
+    const aa = Number(a.split('-')[0]);
+    const bb = Number(b.split('-')[0]);
+    return aa - bb;
+  });
+  return keys[0] || null;
+}
+
+document.getElementById('importBtn').addEventListener('click', () => {
+  document.getElementById('importInput').click();
+});
+
+document.getElementById('importInput').addEventListener('change', event => {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = e => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      const importedCourses = normalizeImportedCourses(parsed);
+
+      if (!importedCourses) {
+        alert(i18n[lang].errImportInvalid);
+        return;
+      }
+
+      let importedCount = 0;
+      let lastImportedCourse = null;
+
+      Object.keys(importedCourses).forEach(courseKey => {
+        if (data[courseKey]) {
+          const overwrite = confirm(i18n[lang].confirmImportOverwrite(courseKey));
+          if (!overwrite) return;
+        }
+
+        data[courseKey] = importedCourses[courseKey];
+        importedCount++;
+        lastImportedCourse = courseKey;
+      });
+
+      if (importedCount === 0) {
+        alert(i18n[lang].importNoChanges);
+        return;
+      }
+
+      currentCourse = lastImportedCourse || currentCourse || firstCourseKey(data);
+      save();
+      render();
+      alert(i18n[lang].importSuccess);
+    } catch (err) {
+      alert(i18n[lang].errImportRead);
+    } finally {
+      event.target.value = '';
+    }
+  };
+
+  reader.onerror = () => {
+    alert(i18n[lang].errImportRead);
+    event.target.value = '';
+  };
+
+  reader.readAsText(file);
+});
+
+document.getElementById('printBtn').addEventListener('click', () => {
+  setPrintDocumentTitle();
+  window.print();
+});
+
+window.addEventListener('beforeprint', setPrintDocumentTitle);
+window.addEventListener('afterprint', restoreDocumentTitle);
+
 document.getElementById('exportBtn').addEventListener('click', () => {
-  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  if (!currentCourse || !data[currentCourse]) return;
+
+  const exportData = buildExportPayload(currentCourse);
+
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], {type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'egutegia-datos.json';
+  a.download = `${currentCourseSafeName()}.json`;
   a.click();
   URL.revokeObjectURL(a.href);
 });
